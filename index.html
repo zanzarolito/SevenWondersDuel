@@ -1,0 +1,3542 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7 Wonders Duel</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a84c;
+  --gold-light: #f0d080;
+  --gold-dark: #8b6914;
+  --parchment: #f5e6c8;
+  --parchment-dark: #e8d4a8;
+  --stone: #2c2416;
+  --stone-light: #4a3c2a;
+  --brown-card: #8B4513;
+  --gray-card: #708090;
+  --red-card: #C0392B;
+  --green-card: #27AE60;
+  --blue-card: #2980B9;
+  --yellow-card: #F39C12;
+  --purple-card: #8E44AD;
+  --military-zone: #e74c3c;
+  --coin-color: #f1c40f;
+  --shadow: 0 4px 20px rgba(0,0,0,0.5);
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: #1a1208;
+  background-image: 
+    radial-gradient(ellipse at 20% 50%, rgba(139,100,20,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 50%, rgba(139,100,20,0.15) 0%, transparent 60%);
+  font-family: 'Lato', sans-serif;
+  color: var(--parchment);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== HEADER ===== */
+#header {
+  background: linear-gradient(180deg, #0d0a05 0%, #1a1208 100%);
+  border-bottom: 2px solid var(--gold-dark);
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+#header h1 {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.4rem;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(201,168,76,0.5);
+  letter-spacing: 2px;
+}
+#age-indicator {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: var(--gold-light);
+  background: rgba(201,168,76,0.1);
+  border: 1px solid var(--gold-dark);
+  padding: 4px 16px;
+  border-radius: 20px;
+}
+#current-player-banner {
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  padding: 4px 16px;
+  border-radius: 20px;
+  transition: all 0.3s;
+}
+.player1-turn { background: rgba(52,152,219,0.2); border: 1px solid #2980b9; color: #7fb8e8; }
+.player2-turn { background: rgba(231,76,60,0.2); border: 1px solid #c0392b; color: #e88080; }
+
+/* ===== MAIN LAYOUT ===== */
+#game-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ===== PLAYER BOARDS ===== */
+.player-board {
+  background: linear-gradient(135deg, #1e1810 0%, #2a2018 100%);
+  border: 1px solid #3a2e1a;
+  border-radius: 8px;
+  padding: 10px;
+  position: relative;
+}
+.player-board.active-player {
+  border-color: var(--gold);
+  box-shadow: 0 0 15px rgba(201,168,76,0.3);
+}
+.player-board.player2 {
+  order: -1;
+}
+
+.player-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.player-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.player1 .player-name { color: #7fb8e8; }
+.player2 .player-name { color: #e88080; }
+
+.player-stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+}
+.stat-icon { font-size: 0.9rem; }
+.coin-badge { border-color: rgba(241,196,15,0.4); color: var(--coin-color); }
+.vp-badge { border-color: rgba(46,204,113,0.4); color: #2ecc71; }
+.shield-badge { border-color: rgba(231,76,60,0.4); color: #e74c3c; }
+.science-badge { border-color: rgba(39,174,96,0.4); color: #2ecc71; }
+
+/* Resources display */
+.resources-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.resource-chip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.res-wood { background: rgba(101,67,33,0.6); border: 1px solid #8B4513; color: #cd853f; }
+.res-stone { background: rgba(105,105,105,0.4); border: 1px solid #808080; color: #c0c0c0; }
+.res-clay { background: rgba(139,69,19,0.5); border: 1px solid #a0522d; color: #d2691e; }
+.res-glass { background: rgba(100,149,237,0.3); border: 1px solid #6495ed; color: #87ceeb; }
+.res-papyrus { background: rgba(218,165,32,0.3); border: 1px solid #daa520; color: #ffd700; }
+
+/* Built cards area */
+.built-cards {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  min-height: 30px;
+}
+.built-card-mini {
+  width: 52px;
+  height: 28px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.2);
+  text-align: center;
+  line-height: 1.1;
+  padding: 1px 2px;
+  transition: transform 0.1s;
+  position: relative;
+  overflow: hidden;
+}
+.built-card-mini:hover { transform: scale(1.15); z-index: 10; }
+.mini-brown { background: linear-gradient(135deg, #8B4513, #6b3410); }
+.mini-gray { background: linear-gradient(135deg, #607080, #405060); }
+.mini-red { background: linear-gradient(135deg, #C0392B, #922b21); }
+.mini-green { background: linear-gradient(135deg, #27AE60, #1e8449); }
+.mini-blue { background: linear-gradient(135deg, #2980B9, #1f618d); }
+.mini-yellow { background: linear-gradient(135deg, #F39C12, #b7770d); }
+.mini-purple { background: linear-gradient(135deg, #8E44AD, #6c3483); }
+
+/* Wonders area */
+.wonders-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.wonder-slot {
+  width: 110px;
+  height: 58px;
+  border-radius: 6px;
+  border: 1px solid var(--gold-dark);
+  background: linear-gradient(135deg, #2a2010, #1a1408);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  overflow: hidden;
+  padding: 3px;
+}
+.wonder-slot:hover:not(.wonder-built) { border-color: var(--gold); box-shadow: 0 0 10px rgba(201,168,76,0.4); }
+.wonder-slot.wonder-built { opacity: 0.5; border-style: dashed; cursor: default; }
+.wonder-slot.wonder-selected { border-color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
+.wonder-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.55rem;
+  color: var(--gold-light);
+  text-align: center;
+  line-height: 1.2;
+}
+.wonder-cost-display {
+  font-size: 0.5rem;
+  color: #aaa;
+  text-align: center;
+}
+.wonder-pts {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.65rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+.wonder-effects-mini {
+  font-size: 0.5rem;
+  color: #ccc;
+  text-align: center;
+}
+
+/* ===== MILITARY TRACK ===== */
+#military-track {
+  background: linear-gradient(180deg, #1a0a0a 0%, #2a1010 50%, #1a0a0a 100%);
+  border: 1px solid #6b0000;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+#military-track h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  color: #e74c3c;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+#conflict-track {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.track-cell {
+  width: 26px;
+  height: 26px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-weight: 700;
+  border: 1px solid #333;
+  position: relative;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+.track-cell.center { background: #444; border-color: #888; width: 30px; height: 30px; border-radius: 50%; font-size:0.7rem; color:#aaa; }
+.track-cell.p1-zone { background: rgba(52,152,219,0.12); border-color: rgba(52,152,219,0.35); }
+.track-cell.p2-zone { background: rgba(231,76,60,0.12); border-color: rgba(231,76,60,0.35); }
+.track-cell.p1-capital { background: rgba(52,152,219,0.4); border-color: #2980b9; font-size: 1rem; width:30px; height:30px; }
+.track-cell.p2-capital { background: rgba(231,76,60,0.4); border-color: #c0392b; font-size: 1rem; width:30px; height:30px; }
+.track-cell.penalty-2 { background: rgba(231,76,60,0.25); border-color: rgba(231,76,60,0.6); }
+.track-cell.penalty-5 { background: rgba(231,76,60,0.45); border-color: rgba(231,76,60,0.9); }
+.conflict-pawn {
+  position: absolute;
+  font-size: 1.2rem;
+  z-index: 5;
+  filter: drop-shadow(0 0 6px rgba(255,200,0,0.8));
+  animation: pawnPulse 2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes pawnPulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.track-labels {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+.track-label { font-size: 0.6rem; color: #888; }
+
+/* ===== PROGRESS TOKENS ===== */
+#progress-area {
+  background: #1a1408;
+  border: 1px solid var(--gold-dark);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+#progress-area h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  color: var(--gold);
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+#progress-tokens-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.progress-token {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2a2a4a 0%, #1a1a3a 100%);
+  border: 2px solid #4a4a8a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.2s;
+  position: relative;
+}
+.progress-token:hover { border-color: var(--gold); transform: scale(1.1); }
+.progress-token-name {
+  font-size: 0.35rem;
+  color: #aaa;
+  text-align: center;
+  line-height: 1;
+  margin-top: 1px;
+}
+.progress-token.taken { opacity: 0.3; pointer-events: none; }
+
+/* ===== CARD STRUCTURE ===== */
+#structure-area {
+  background: linear-gradient(180deg, #0f0e0a 0%, #1a1810 100%);
+  border: 1px solid #3a3420;
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+}
+#structure-area h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  color: var(--gold);
+  letter-spacing: 3px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+#card-structure {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.structure-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+/* ===== CARD SLOT — Style inspiré des vraies cartes ===== */
+.card-slot {
+  width: 80px;
+  height: 110px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.7);
+}
+.card-slot:not(.card-hidden):not(.card-removed):hover {
+  transform: translateY(-6px) scale(1.06);
+  z-index: 20;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.9);
+}
+.card-slot.card-accessible { cursor: pointer; }
+.card-slot.card-accessible::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  border: 2px solid rgba(255,255,255,0.6);
+  pointer-events: none;
+  animation: accessiblePulse 2s ease-in-out infinite;
+  z-index: 10;
+}
+@keyframes accessiblePulse {
+  0%,100% { border-color: rgba(255,255,255,0.25); }
+  50% { border-color: rgba(255,255,255,0.85); }
+}
+.card-slot.card-inaccessible { cursor: not-allowed; filter: brightness(0.5) saturate(0.6); }
+.card-slot.card-hidden {
+  background: linear-gradient(160deg, #2e2418 0%, #1a1208 100%) !important;
+  border: 2px solid #3a2e1a !important;
+  cursor: not-allowed;
+  align-items: center;
+  justify-content: center;
+}
+.card-slot.card-hidden::before {
+  content: '?';
+  font-size: 1.8rem;
+  color: var(--gold-dark);
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+}
+.card-slot.card-removed {
+  background: transparent !important;
+  border: 1px dashed rgba(255,255,255,0.05) !important;
+  cursor: default;
+  box-shadow: none;
+  visibility: hidden;
+}
+.card-slot.card-selected {
+  box-shadow: 0 0 0 3px white, 0 8px 25px rgba(255,255,255,0.4) !important;
+  transform: translateY(-8px) scale(1.1) !important;
+  z-index: 30 !important;
+}
+
+/* Zones internes de la carte */
+.card-header {
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 4px;
+  position: relative;
+  z-index: 2;
+}
+.card-art {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-art-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+}
+.card-footer {
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.75);
+  padding: 0 3px;
+  position: relative;
+  z-index: 2;
+}
+.card-footer-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.42rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.1;
+  color: #f0e0c0;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Couleurs par type — header gradient */
+.color-brown .card-header { background: linear-gradient(180deg, #a0562a 0%, #6b3010 100%); border-bottom: 1px solid #cd853f; }
+.color-brown .card-art-bg { background: linear-gradient(160deg, #8B4513, #3d1a08); }
+.color-gray  .card-header { background: linear-gradient(180deg, #7a8fa0 0%, #4a6070 100%); border-bottom: 1px solid #a0b8c8; }
+.color-gray  .card-art-bg { background: linear-gradient(160deg, #607080, #2a3a48); }
+.color-red   .card-header { background: linear-gradient(180deg, #d44030 0%, #8b1a10 100%); border-bottom: 1px solid #e74c3c; }
+.color-red   .card-art-bg { background: linear-gradient(160deg, #C0392B, #4a1008); }
+.color-green .card-header { background: linear-gradient(180deg, #30b870 0%, #1a7a42 100%); border-bottom: 1px solid #2ecc71; }
+.color-green .card-art-bg { background: linear-gradient(160deg, #27AE60, #0a4a20); }
+.color-blue  .card-header { background: linear-gradient(180deg, #3498db 0%, #1a5a8a 100%); border-bottom: 1px solid #5dade2; }
+.color-blue  .card-art-bg { background: linear-gradient(160deg, #2980B9, #0a3060); }
+.color-yellow .card-header { background: linear-gradient(180deg, #f5b030 0%, #a07010 100%); border-bottom: 1px solid #f1c40f; }
+.color-yellow .card-art-bg { background: linear-gradient(160deg, #F39C12, #5a4000); }
+.color-purple .card-header { background: linear-gradient(180deg, #a060c8 0%, #5e2d75 100%); border-bottom: 1px solid #9b59b6; }
+.color-purple .card-art-bg { background: linear-gradient(160deg, #8E44AD, #2a1040); }
+
+/* Fond de la zone art selon couleur */
+.color-brown .card-art  { background: linear-gradient(180deg, #6b3010 0%, #3d1a08 100%); }
+.color-gray  .card-art  { background: linear-gradient(180deg, #4a6070 0%, #2a3a48 100%); }
+.color-red   .card-art  { background: linear-gradient(180deg, #8b1a10 0%, #4a0a08 100%); }
+.color-green .card-art  { background: linear-gradient(180deg, #1a7a42 0%, #0a3a20 100%); }
+.color-blue  .card-art  { background: linear-gradient(180deg, #1a5a8a 0%, #0a2848 100%); }
+.color-yellow .card-art { background: linear-gradient(180deg, #a07010 0%, #5a3800 100%); }
+.color-purple .card-art { background: linear-gradient(180deg, #5e2d75 0%, #2a1040 100%); }
+
+/* Icônes de coût dans le header */
+.card-cost-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  font-size: 0.55rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(0,0,0,0.4);
+  color: white;
+  line-height: 1;
+}
+.cost-coin { background: radial-gradient(circle, #f5d060, #c09010); border-color: #f0d050; color: #3a2000; }
+.cost-wood   { background: radial-gradient(circle, #a0622a, #6b3010); border-color: #cd853f; }
+.cost-stone  { background: radial-gradient(circle, #c0c0c0, #808080); border-color: #d0d0d0; color: #333; }
+.cost-clay   { background: radial-gradient(circle, #c87840, #8b4a20); border-color: #d2691e; }
+.cost-glass  { background: radial-gradient(circle, #80c8e8, #3080b0); border-color: #87ceeb; color: #003060; }
+.cost-papyrus { background: radial-gradient(circle, #f0d080, #c0a020); border-color: #daa520; color: #4a3000; }
+
+/* Effets dans la zone art */
+.card-effect-badge {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0,0,0,0.65);
+  border-radius: 8px;
+  padding: 1px 5px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+  border: 1px solid rgba(255,255,255,0.2);
+  z-index: 3;
+}
+
+/* VP badge top-left */
+.card-vp-badge {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f0d060, #a07010);
+  border: 1.5px solid #f5e080;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: #2a1a00;
+  z-index: 4;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
+/* Art icons — symboles décoratifs au centre */
+.card-art-icon {
+  font-size: 1.6rem;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+  opacity: 0.9;
+}
+
+/* Chain indicator */
+.card-chain-dot {
+  position: absolute;
+  bottom: 24px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #a8e6cf;
+  border: 1px solid #2ecc71;
+  z-index: 4;
+}
+
+.card-info-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 13px;
+  height: 13px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  z-index: 15;
+  border: 1px solid rgba(255,255,255,0.3);
+  font-style: italic;
+  font-family: serif;
+}
+.card-info-btn:hover { background: rgba(255,255,255,0.2); color: white; }
+
+/* ===== ACTION PANEL ===== */
+#action-panel {
+  background: linear-gradient(180deg, #0f0c08 0%, #1a1610 100%);
+  border: 1px solid var(--gold-dark);
+  border-radius: 8px;
+  padding: 12px;
+}
+#action-panel h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+#selected-card-info {
+  background: rgba(0,0,0,0.3);
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.selected-card-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.selected-card-details {
+  font-size: 0.75rem;
+  color: #ccc;
+  line-height: 1.5;
+}
+.cost-detail {
+  font-size: 0.75rem;
+  color: #aaa;
+}
+.cost-detail span { color: var(--gold); font-weight: 700; }
+.cost-warning { color: #e74c3c; }
+.cost-ok { color: #2ecc71; }
+.chain-notice { color: #a8e6cf; font-style: italic; }
+
+#action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.action-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: 1px;
+}
+.action-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+.action-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-build {
+  background: linear-gradient(135deg, #27ae60, #1e8449);
+  color: white;
+  border: 1px solid #2ecc71;
+}
+.btn-discard {
+  background: linear-gradient(135deg, #c0392b, #8b1a10);
+  color: white;
+  border: 1px solid #e74c3c;
+}
+.btn-wonder {
+  background: linear-gradient(135deg, #8b6914, #5a4010);
+  color: var(--gold-light);
+  border: 1px solid var(--gold);
+}
+.btn-build:hover:not(:disabled) { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.btn-discard:hover:not(:disabled) { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+.btn-wonder:hover:not(:disabled) { background: linear-gradient(135deg, #c9a84c, #8b6914); }
+
+/* ===== MODAL / TOOLTIP ===== */
+#modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+#modal-overlay.active { display: flex; }
+#modal-box {
+  background: linear-gradient(135deg, #1a1408 0%, #2a2018 100%);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 420px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+#modal-box h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold-light);
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--gold-dark);
+  padding-bottom: 8px;
+}
+#modal-body { font-size: 0.85rem; line-height: 1.6; color: var(--parchment); }
+#modal-body strong { color: var(--gold-light); }
+#modal-body .modal-section { margin-bottom: 10px; }
+#modal-body .modal-label { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+#modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+}
+#modal-close:hover { color: white; }
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.modal-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+.modal-btn:hover { transform: translateY(-1px); }
+.modal-btn-build { background: #27ae60; color: white; }
+.modal-btn-discard { background: #c0392b; color: white; }
+.modal-btn-wonder { background: #8b6914; color: var(--gold-light); }
+.modal-btn-cancel { background: #333; color: #aaa; }
+
+/* ===== NOTIFICATIONS ===== */
+#notification {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: linear-gradient(135deg, #1a1408, #2a2018);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  color: var(--gold-light);
+  z-index: 2000;
+  transition: transform 0.3s ease;
+  text-align: center;
+  max-width: 400px;
+}
+#notification.show { transform: translateX(-50%) translateY(0); }
+#notification.error { border-color: #e74c3c; color: #e88080; }
+#notification.success { border-color: #2ecc71; color: #a8e6cf; }
+#notification.military { border-color: #e74c3c; background: linear-gradient(135deg, #2a0a0a, #1a0a08); }
+
+/* ===== SCORE PANEL ===== */
+#score-panel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+#score-panel.active { display: flex; }
+#score-box {
+  background: linear-gradient(135deg, #1a1408, #2a2018);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+}
+#score-box h2 {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.6rem;
+  color: var(--gold);
+  margin-bottom: 20px;
+}
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  font-size: 0.85rem;
+}
+.score-label { color: #aaa; }
+.score-val { font-weight: 700; color: var(--gold-light); font-size: 1rem; }
+.score-winner {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  color: var(--gold);
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  background: rgba(201,168,76,0.1);
+}
+.btn-new-game {
+  margin-top: 16px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+  border: none;
+  border-radius: 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  color: #1a1408;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+.btn-new-game:hover { transform: scale(1.05); }
+
+/* Science symbols display */
+.science-symbols-row {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.sci-sym {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(39,174,96,0.3);
+  border: 1px solid #27ae60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+}
+
+/* Discard pile button */
+#discard-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: #aaa;
+  font-size: 0.7rem;
+  cursor: pointer;
+  z-index: 50;
+  transition: all 0.2s;
+}
+#discard-btn:hover { border-color: #888; color: white; }
+
+/* Tabs */
+.player-section-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.ptab {
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  cursor: pointer;
+  border: 1px solid #333;
+  background: rgba(0,0,0,0.3);
+  color: #888;
+  transition: all 0.2s;
+}
+.ptab.active { background: rgba(201,168,76,0.2); border-color: var(--gold-dark); color: var(--gold-light); }
+
+.ptab-content { display: none; }
+.ptab-content.active { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-slot { width: 62px; height: 86px; }
+  .card-header { height: 26px; }
+  .card-footer { height: 18px; }
+  .card-footer-name { font-size: 0.36rem; }
+  .wonder-slot { width: 90px; height: 50px; }
+  #header h1 { font-size: 1rem; }
+}
+
+/* Wonder selection modal */
+.wonder-select-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.wonder-select-card {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--gold-dark);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.wonder-select-card:hover { border-color: var(--gold); background: rgba(201,168,76,0.1); }
+.wonder-select-card.selected { border-color: white; background: rgba(255,255,255,0.1); }
+.wonder-select-card h4 { font-family: 'Cinzel', serif; font-size: 0.7rem; color: var(--gold-light); }
+.wonder-select-card p { font-size: 0.6rem; color: #aaa; margin-top: 2px; }
+
+/* Progress token choice */
+.token-choice-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+.token-choice-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #3a3a6a 0%, #2a2a5a 100%);
+  border: 2px solid #5a5a9a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: all 0.2s;
+}
+.token-choice-btn:hover { border-color: var(--gold); transform: scale(1.1); }
+.token-choice-name { font-size: 0.45rem; color: #ccc; margin-top: 2px; text-align: center; }
+
+/* Destroy card selection */
+.destroy-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.destroy-card-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  border: none;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+.destroy-card-btn:hover { transform: scale(1.05); opacity: 0.9; }
+
+/* ===== WONDER DRAFT OVERLAY ===== */
+#draft-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, #1a1208 0%, #0a0804 100%);
+  z-index: 4000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 24px;
+}
+#draft-overlay.active { display: flex; }
+#draft-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 900px;
+  width: 100%;
+  padding: 0 20px;
+}
+#draft-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.8rem;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(201,168,76,0.6);
+  text-align: center;
+}
+#draft-subtitle {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: var(--parchment);
+  text-align: center;
+  opacity: 0.8;
+}
+#draft-wonders {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+#draft-instruction {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  color: var(--gold-light);
+  text-align: center;
+  padding: 8px 20px;
+  border: 1px solid var(--gold-dark);
+  border-radius: 20px;
+  background: rgba(201,168,76,0.08);
+}
+
+/* ===== WONDER CARD — Style horizontal (comme les vraies) ===== */
+.wonder-card {
+  width: 200px;
+  height: 130px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.25s;
+  border: 2px solid rgba(201,168,76,0.4);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+  flex-shrink: 0;
+}
+.wonder-card:hover {
+  transform: translateY(-6px) scale(1.04);
+  border-color: var(--gold);
+  box-shadow: 0 12px 35px rgba(201,168,76,0.3);
+}
+.wonder-card.wonder-selected-draft {
+  border-color: white;
+  box-shadow: 0 0 0 3px white, 0 12px 35px rgba(255,255,255,0.3);
+  transform: translateY(-8px) scale(1.06);
+}
+.wonder-card.wonder-taken {
+  opacity: 0.35;
+  filter: grayscale(0.8);
+  cursor: default;
+  transform: none !important;
+}
+.wonder-card.wonder-built-card {
+  opacity: 0.5;
+  filter: grayscale(0.5);
+  cursor: default;
+}
+
+/* Zone gauche : coût en ressources */
+.wonder-card-cost {
+  width: 30px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: rgba(0,0,0,0.55);
+  padding: 6px 3px;
+  z-index: 3;
+}
+.wonder-res-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+
+/* Zone centrale : illustration (dégradé thématique + icône) */
+.wonder-card-art {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.wonder-card-art-bg {
+  position: absolute;
+  inset: 0;
+}
+.wonder-card-art-icon {
+  font-size: 3rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -58%);
+  opacity: 0.35;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8));
+}
+.wonder-card-name-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.78);
+  padding: 4px 6px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: #f0d880;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  z-index: 3;
+}
+
+/* Zone droite : effets */
+.wonder-card-effects {
+  width: 36px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(0,0,0,0.55);
+  padding: 6px 3px;
+  z-index: 3;
+}
+.wonder-effect-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 900;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  flex-shrink: 0;
+  position: relative;
+}
+.wonder-effect-vp {
+  background: radial-gradient(circle, #f5d060, #a07010);
+  border-color: #f0e060;
+  color: #2a1a00;
+  font-size: 0.75rem;
+}
+.wonder-effect-coin {
+  background: radial-gradient(circle, #f5d060, #c09010);
+  border-color: #f0d050;
+  color: #3a2000;
+  font-size: 0.6rem;
+}
+.wonder-effect-shield {
+  background: radial-gradient(circle, #e05030, #8b1a10);
+  border-color: #e74c3c;
+  font-size: 0.75rem;
+}
+.wonder-effect-replay {
+  background: radial-gradient(circle, #4080d0, #204880);
+  border-color: #5090e0;
+  font-size: 0.8rem;
+}
+.wonder-effect-special {
+  background: radial-gradient(circle, #9060c0, #502870);
+  border-color: #a070d0;
+  font-size: 0.65rem;
+}
+
+/* Wonder slots dans le plateau joueur — aussi horizontaux mais plus petits */
+.wonder-slot {
+  width: 155px;
+  height: 100px;
+  border-radius: 9px;
+  display: flex;
+  flex-direction: row;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  overflow: hidden;
+  border: 2px solid rgba(201,168,76,0.35);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+  flex-shrink: 0;
+}
+.wonder-slot:hover:not(.wonder-built) {
+  border-color: var(--gold);
+  box-shadow: 0 0 15px rgba(201,168,76,0.4);
+  transform: translateY(-3px);
+}
+.wonder-slot.wonder-built {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  cursor: default;
+  border-style: dashed;
+}
+.wonder-slot.wonder-selected {
+  border-color: white;
+  box-shadow: 0 0 0 2px white, 0 6px 20px rgba(255,255,255,0.3);
+  transform: translateY(-4px);
+}
+#phase-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  z-index: 3000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+#phase-overlay.active { display: flex; }
+#phase-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 2.5rem;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(201,168,76,0.8);
+  text-align: center;
+}
+#phase-subtitle {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: var(--parchment);
+  text-align: center;
+}
+.btn-continue {
+  padding: 12px 30px;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+  border: none;
+  border-radius: 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: #1a1408;
+  cursor: pointer;
+  font-weight: 700;
+  margin-top: 10px;
+  transition: all 0.2s;
+}
+.btn-continue:hover { transform: scale(1.05); }
+
+/* Player sections layout */
+.player-content {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.player-left { flex: 0 0 auto; }
+.player-right { flex: 1; min-width: 200px; }
+
+/* Log */
+#game-log {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid #2a2010;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.7rem;
+  color: #888;
+  max-height: 80px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+#game-log .log-entry { padding: 1px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+#game-log .log-entry:last-child { color: var(--parchment); }
+
+/* Tooltip */
+.tooltip-container { position: relative; display: inline-block; }
+.tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+  background: #1a1408;
+  border: 1px solid var(--gold-dark);
+  color: var(--parchment);
+  font-size: 0.7rem;
+  border-radius: 6px;
+  padding: 6px 10px;
+  position: absolute;
+  z-index: 200;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  line-height: 1.4;
+}
+.tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+/* Science victory */
+.science-win-warning { color: #f1c40f; font-size: 0.75rem; font-weight: 700; animation: blink 1s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1>⚡ 7 Wonders Duel</h1>
+  <div id="age-indicator">Âge I</div>
+  <div id="current-player-banner" class="player1-turn">Tour de Joueur 1</div>
+</div>
+
+<!-- GAME CONTAINER -->
+<div id="game-container">
+
+  <!-- PLAYER 2 BOARD (top) -->
+  <div class="player-board player2" id="board-p2">
+    <div class="player-header">
+      <div class="player-name" id="p2-name">⚔ Joueur 2</div>
+      <div class="player-stats">
+        <div class="stat-badge coin-badge tooltip-container">
+          <span class="stat-icon">🪙</span><span id="p2-coins">7</span>
+          <span class="tooltip-text">Pièces d'or. 3 pièces = 1 PV en fin de partie.</span>
+        </div>
+        <div class="stat-badge vp-badge tooltip-container">
+          <span class="stat-icon">⭐</span><span id="p2-vp">0</span>
+          <span class="tooltip-text">Points de Victoire estimés (sans fin de partie).</span>
+        </div>
+        <div class="stat-badge shield-badge tooltip-container">
+          <span class="stat-icon">🛡</span><span id="p2-shields">0</span>
+          <span class="tooltip-text">Boucliers militaires totaux.</span>
+        </div>
+        <div class="stat-badge science-badge tooltip-container">
+          <span class="stat-icon">🔬</span><div class="science-symbols-row" id="p2-science"></div>
+          <span class="tooltip-text">Symboles scientifiques. 6 différents = victoire scientifique!</span>
+        </div>
+      </div>
+    </div>
+    <div class="player-content">
+      <div class="player-left">
+        <div style="font-size:0.6rem; color:var(--gold); font-family:'Cinzel',serif; margin-bottom:3px;">MERVEILLES</div>
+        <div class="wonders-row" id="wonders-p2"></div>
+      </div>
+      <div class="player-right">
+        <div class="player-section-tabs">
+          <div class="ptab active" onclick="switchTab('p2','resources')">Ressources</div>
+          <div class="ptab" onclick="switchTab('p2','built')">Cité</div>
+          <div class="ptab" onclick="switchTab('p2','progress')">Progrès</div>
+        </div>
+        <div id="p2-resources" class="ptab-content active">
+          <div class="resources-row" id="p2-resources-row"></div>
+        </div>
+        <div id="p2-built" class="ptab-content">
+          <div class="built-cards" id="built-p2"></div>
+        </div>
+        <div id="p2-progress" class="ptab-content">
+          <div id="p2-progress-tokens"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MILITARY TRACK -->
+  <div id="military-track">
+    <h3>⚔ Piste de Conflit ⚔</h3>
+    <div id="conflict-track"></div>
+    <div class="track-labels">
+      <span class="track-label">Capitale J2</span>
+      <span class="track-label">Capitale J1</span>
+    </div>
+  </div>
+
+  <!-- PROGRESS TOKENS -->
+  <div id="progress-area">
+    <h3>✦ JETONS PROGRÈS DISPONIBLES ✦</h3>
+    <div id="progress-tokens-row"></div>
+  </div>
+
+  <!-- CARD STRUCTURE -->
+  <div id="structure-area">
+    <h3 id="structure-title">✦ STRUCTURE DE L'ÂGE I ✦</h3>
+    <div id="card-structure"></div>
+  </div>
+
+  <!-- ACTION PANEL -->
+  <div id="action-panel">
+    <h3 id="action-title">ACTION</h3>
+    <div id="selected-card-info">
+      <div style="color:#666; font-size:0.8rem; text-align:center; padding:10px 0;">← Sélectionnez une carte accessible pour jouer</div>
+    </div>
+    <div id="action-buttons">
+      <button class="action-btn btn-build" id="btn-build" disabled onclick="performBuild()">🏛 Construire</button>
+      <button class="action-btn btn-discard" id="btn-discard" disabled onclick="performDiscard()">💰 Défausser (+pièces)</button>
+      <button class="action-btn btn-wonder" id="btn-wonder" disabled onclick="performWonderBuild()">🌟 Construire Merveille</button>
+    </div>
+    <div id="game-log"></div>
+  </div>
+
+  <!-- PLAYER 1 BOARD (bottom) -->
+  <div class="player-board player1 active-player" id="board-p1">
+    <div class="player-header">
+      <div class="player-name" id="p1-name">🏛 Joueur 1</div>
+      <div class="player-stats">
+        <div class="stat-badge coin-badge tooltip-container">
+          <span class="stat-icon">🪙</span><span id="p1-coins">7</span>
+          <span class="tooltip-text">Pièces d'or. 3 pièces = 1 PV en fin de partie.</span>
+        </div>
+        <div class="stat-badge vp-badge tooltip-container">
+          <span class="stat-icon">⭐</span><span id="p1-vp">0</span>
+          <span class="tooltip-text">Points de Victoire estimés.</span>
+        </div>
+        <div class="stat-badge shield-badge tooltip-container">
+          <span class="stat-icon">🛡</span><span id="p1-shields">0</span>
+          <span class="tooltip-text">Boucliers militaires totaux.</span>
+        </div>
+        <div class="stat-badge science-badge tooltip-container">
+          <span class="stat-icon">🔬</span><div class="science-symbols-row" id="p1-science"></div>
+          <span class="tooltip-text">Symboles scientifiques. 6 différents = victoire scientifique!</span>
+        </div>
+      </div>
+    </div>
+    <div class="player-content">
+      <div class="player-left">
+        <div style="font-size:0.6rem; color:var(--gold); font-family:'Cinzel',serif; margin-bottom:3px;">MERVEILLES</div>
+        <div class="wonders-row" id="wonders-p1"></div>
+      </div>
+      <div class="player-right">
+        <div class="player-section-tabs">
+          <div class="ptab active" onclick="switchTab('p1','resources')">Ressources</div>
+          <div class="ptab" onclick="switchTab('p1','built')">Cité</div>
+          <div class="ptab" onclick="switchTab('p1','progress')">Progrès</div>
+        </div>
+        <div id="p1-resources" class="ptab-content active">
+          <div class="resources-row" id="p1-resources-row"></div>
+        </div>
+        <div id="p1-built" class="ptab-content">
+          <div class="built-cards" id="built-p1"></div>
+        </div>
+        <div id="p1-progress" class="ptab-content">
+          <div id="p1-progress-tokens"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DISCARD PILE BTN -->
+<button id="discard-btn" onclick="showDiscard()">📜 Défausse (<span id="discard-count">0</span>)</button>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="closeModalIfOutside(event)">
+  <div id="modal-box">
+    <button id="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- WONDER DRAFT OVERLAY -->
+<div id="draft-overlay">
+  <div id="draft-box">
+    <div id="draft-title"></div>
+    <div id="draft-subtitle"></div>
+    <div id="draft-wonders"></div>
+    <div id="draft-instruction"></div>
+  </div>
+</div>
+
+<!-- SCORE PANEL -->
+<div id="score-panel">
+  <div id="score-box">
+    <h2>🏆 Fin de Partie</h2>
+    <div id="score-content"></div>
+    <button class="btn-new-game" onclick="newGame()">🔄 Nouvelle Partie</button>
+  </div>
+</div>
+
+<!-- PHASE OVERLAY -->
+<div id="phase-overlay">
+  <div id="phase-title"></div>
+  <div id="phase-subtitle"></div>
+  <button class="btn-continue" onclick="dismissPhaseOverlay()">Continuer →</button>
+</div>
+
+<!-- NOTIFICATION -->
+<div id="notification"></div>
+
+<script>
+// ===================================================
+// GAME DATA
+// ===================================================
+
+const CARD_DATA = {
+  // AGE I
+  age1_chantier: { id:'age1_chantier', name:'Chantier', age:1, color:'brown', cost:{coins:0,resources:{}}, effect:{produces:{wood:1}}, chain_to:'age2_haras', victory_points:0 },
+  age1_exploitation: { id:'age1_exploitation', name:'Exploitation', age:1, color:'brown', cost:{coins:1,resources:{}}, effect:{produces:{stone:1}}, victory_points:0 },
+  age1_bassin_argileux: { id:'age1_bassin_argileux', name:'Bassin Argileux', age:1, color:'brown', cost:{coins:0,resources:{}}, effect:{produces:{clay:1}}, victory_points:0 },
+  age1_cavite: { id:'age1_cavite', name:'Cavité', age:1, color:'brown', cost:{coins:1,resources:{}}, effect:{produces:{wood:1}}, victory_points:0 },
+  age1_gisement: { id:'age1_gisement', name:'Gisement', age:1, color:'brown', cost:{coins:0,resources:{}}, effect:{produces:{stone:1}}, victory_points:0 },
+  age1_mine: { id:'age1_mine', name:'Mine', age:1, color:'brown', cost:{coins:1,resources:{}}, effect:{produces:{stone:1}}, victory_points:0 },
+  age1_verrerie: { id:'age1_verrerie', name:'Verrerie', age:1, color:'gray', cost:{coins:1,resources:{}}, effect:{produces:{glass:1}}, victory_points:0 },
+  age1_presse: { id:'age1_presse', name:'Presse', age:1, color:'gray', cost:{coins:1,resources:{}}, effect:{produces:{papyrus:1}}, victory_points:0 },
+  age1_tour_de_garde: { id:'age1_tour_de_garde', name:'Tour de Garde', age:1, color:'red', cost:{coins:0,resources:{}}, effect:{shields:1}, victory_points:0 },
+  age1_ecuries: { id:'age1_ecuries', name:'Écuries', age:1, color:'red', cost:{coins:0,resources:{}}, effect:{shields:1}, chain_to:'age2_haras', victory_points:0 },
+  age1_caserne: { id:'age1_caserne', name:'Caserne', age:1, color:'red', cost:{coins:0,resources:{clay:1}}, effect:{shields:1}, chain_to:'age2_baraquements', victory_points:0 },
+  age1_palissade: { id:'age1_palissade', name:'Palissade', age:1, color:'red', cost:{coins:2,resources:{}}, effect:{shields:1}, chain_to:'age3_fortifications', victory_points:0 },
+  age1_atelier: { id:'age1_atelier', name:'Atelier', age:1, color:'green', cost:{coins:0,resources:{papyrus:1}}, effect:{science:'gear'}, victory_points:1 },
+  age1_apothicaire: { id:'age1_apothicaire', name:'Apothicaire', age:1, color:'green', cost:{coins:0,resources:{glass:1}}, effect:{science:'compass'}, victory_points:1 },
+  age1_scriptorium: { id:'age1_scriptorium', name:'Scriptorium', age:1, color:'green', cost:{coins:2,resources:{}}, effect:{science:'quill'}, chain_to:'age2_bibliotheque', victory_points:0 },
+  age1_officine: { id:'age1_officine', name:'Officine', age:1, color:'green', cost:{coins:2,resources:{}}, effect:{science:'mortar'}, chain_to:'age2_dispensaire', victory_points:0 },
+  age1_theatre: { id:'age1_theatre', name:'Théâtre', age:1, color:'blue', cost:{coins:0,resources:{}}, effect:{}, chain_to:'age2_statue', victory_points:3 },
+  age1_autel: { id:'age1_autel', name:'Autel', age:1, color:'blue', cost:{coins:0,resources:{}}, effect:{}, chain_to:'age2_temple', victory_points:3 },
+  age1_bains: { id:'age1_bains', name:'Bains', age:1, color:'blue', cost:{coins:0,resources:{stone:1}}, effect:{}, chain_to:'age2_aqueduc', victory_points:3 },
+  age1_taverne: { id:'age1_taverne', name:'Taverne', age:1, color:'yellow', cost:{coins:0,resources:{}}, effect:{coins_immediate:4}, chain_to:'age3_phare', victory_points:0 },
+  age1_depot_pierre: { id:'age1_depot_pierre', name:'Dépôt de Pierre', age:1, color:'yellow', cost:{coins:3,resources:{}}, effect:{trade_discount:{stone:1}}, victory_points:0 },
+  age1_depot_argile: { id:'age1_depot_argile', name:"Dépôt d'Argile", age:1, color:'yellow', cost:{coins:3,resources:{}}, effect:{trade_discount:{clay:1}}, victory_points:0 },
+  age1_depot_bois: { id:'age1_depot_bois', name:'Dépôt de Bois', age:1, color:'yellow', cost:{coins:3,resources:{}}, effect:{trade_discount:{wood:1}}, victory_points:0 },
+  // AGE II
+  age2_scierie: { id:'age2_scierie', name:'Scierie', age:2, color:'brown', cost:{coins:2,resources:{}}, effect:{produces:{wood:2}}, victory_points:0 },
+  age2_briqueterie: { id:'age2_briqueterie', name:'Briqueterie', age:2, color:'brown', cost:{coins:2,resources:{}}, effect:{produces:{clay:2}}, victory_points:0 },
+  age2_carriere: { id:'age2_carriere', name:'Carrière', age:2, color:'brown', cost:{coins:2,resources:{}}, effect:{produces:{stone:2}}, victory_points:0 },
+  age2_soufflerie: { id:'age2_soufflerie', name:'Soufflerie', age:2, color:'gray', cost:{coins:0,resources:{}}, effect:{produces:{glass:1}}, victory_points:0 },
+  age2_sechoir: { id:'age2_sechoir', name:'Séchoir', age:2, color:'gray', cost:{coins:0,resources:{}}, effect:{produces:{papyrus:1}}, victory_points:0 },
+  age2_muraille: { id:'age2_muraille', name:'Muraille', age:2, color:'red', cost:{coins:0,resources:{stone:2}}, effect:{shields:2}, victory_points:0 },
+  age2_haras: { id:'age2_haras', name:'Haras', age:2, color:'red', cost:{coins:0,resources:{clay:1,wood:1}}, effect:{shields:1}, chain_from:'age1_ecuries', victory_points:0 },
+  age2_baraquements: { id:'age2_baraquements', name:'Baraquements', age:2, color:'red', cost:{coins:3,resources:{}}, effect:{shields:1}, chain_from:'age1_caserne', chain_to:'age3_cirque', victory_points:0 },
+  age2_champ_de_tir: { id:'age2_champ_de_tir', name:'Champ de Tir', age:2, color:'red', cost:{coins:0,resources:{stone:1,wood:1,glass:1}}, effect:{shields:2}, chain_to:'age3_atelier_siege', victory_points:0 },
+  age2_place_darmes: { id:'age2_place_darmes', name:"Place d'Armes", age:2, color:'red', cost:{coins:0,resources:{stone:1,wood:1,papyrus:1}}, effect:{shields:3}, chain_to:'age3_cirque', victory_points:0 },
+  age2_bibliotheque: { id:'age2_bibliotheque', name:'Bibliothèque', age:2, color:'green', cost:{coins:0,resources:{stone:1,glass:1}}, effect:{science:'quill'}, chain_from:'age1_scriptorium', victory_points:2 },
+  age2_dispensaire: { id:'age2_dispensaire', name:'Dispensaire', age:2, color:'green', cost:{coins:0,resources:{clay:2}}, effect:{science:'mortar'}, chain_from:'age1_officine', victory_points:2 },
+  age2_ecole: { id:'age2_ecole', name:'École', age:2, color:'green', cost:{coins:0,resources:{wood:1,papyrus:1}}, effect:{science:'wheel'}, chain_to:'age3_universite', victory_points:1 },
+  age2_laboratoire: { id:'age2_laboratoire', name:'Laboratoire', age:2, color:'green', cost:{coins:0,resources:{clay:1,glass:1}}, effect:{science:'gear'}, chain_to:'age3_observatoire', victory_points:1 },
+  age2_statue: { id:'age2_statue', name:'Statue', age:2, color:'blue', cost:{coins:0,resources:{clay:1,wood:1}}, effect:{}, chain_from:'age1_theatre', chain_to:'age3_jardins', victory_points:4 },
+  age2_temple: { id:'age2_temple', name:'Temple', age:2, color:'blue', cost:{coins:0,resources:{wood:1,papyrus:1}}, effect:{}, chain_from:'age1_autel', chain_to:'age3_pantheon', victory_points:4 },
+  age2_aqueduc: { id:'age2_aqueduc', name:'Aqueduc', age:2, color:'blue', cost:{coins:0,resources:{stone:3}}, effect:{}, chain_from:'age1_bains', victory_points:5 },
+  age2_rostres: { id:'age2_rostres', name:'Rostres', age:2, color:'blue', cost:{coins:0,resources:{stone:1,wood:1}}, effect:{}, chain_to:'age3_senat', victory_points:4 },
+  age2_tribunal: { id:'age2_tribunal', name:'Tribunal', age:2, color:'blue', cost:{coins:0,resources:{wood:2,glass:1}}, effect:{}, victory_points:5 },
+  age2_forum: { id:'age2_forum', name:'Forum', age:2, color:'yellow', cost:{coins:3,resources:{clay:1}}, effect:{produces_choice:['glass','papyrus']}, victory_points:0 },
+  age2_caravanserail: { id:'age2_caravanserail', name:'Caravansérail', age:2, color:'yellow', cost:{coins:2,resources:{glass:1,papyrus:1}}, effect:{produces_choice:['stone','clay','wood']}, victory_points:0 },
+  age2_douanes: { id:'age2_douanes', name:'Douanes', age:2, color:'yellow', cost:{coins:4,resources:{}}, effect:{trade_discount:{glass:1,papyrus:1}}, victory_points:0 },
+  age2_brasserie: { id:'age2_brasserie', name:'Brasserie', age:2, color:'yellow', cost:{coins:0,resources:{}}, effect:{coins_immediate:6}, chain_to:'age3_arene', victory_points:0 },
+  // AGE III
+  age3_arsenal: { id:'age3_arsenal', name:'Arsenal', age:3, color:'red', cost:{coins:0,resources:{clay:3,wood:2}}, effect:{shields:3}, victory_points:0 },
+  age3_atelier_siege: { id:'age3_atelier_siege', name:'Atelier de Siège', age:3, color:'red', cost:{coins:0,resources:{wood:3,glass:1}}, effect:{shields:2}, chain_from:'age2_champ_de_tir', victory_points:0 },
+  age3_fortifications: { id:'age3_fortifications', name:'Fortifications', age:3, color:'red', cost:{coins:0,resources:{stone:2,clay:1,papyrus:1}}, effect:{shields:3}, chain_from:'age1_palissade', victory_points:0 },
+  age3_cirque: { id:'age3_cirque', name:'Cirque', age:3, color:'red', cost:{coins:0,resources:{stone:1,clay:1,wood:1}}, effect:{shields:2}, chain_from:['age2_baraquements','age2_place_darmes'], victory_points:0 },
+  age3_academie: { id:'age3_academie', name:'Académie', age:3, color:'green', cost:{coins:0,resources:{stone:1,wood:1,glass:1}}, effect:{science:'astrolabe'}, victory_points:3 },
+  age3_etude: { id:'age3_etude', name:'Étude', age:3, color:'green', cost:{coins:0,resources:{wood:1,glass:1,papyrus:1}}, effect:{science:'pen'}, victory_points:3 },
+  age3_universite: { id:'age3_universite', name:'Université', age:3, color:'green', cost:{coins:0,resources:{stone:1,glass:1}}, effect:{science:'sundial'}, chain_from:'age2_ecole', victory_points:2 },
+  age3_observatoire: { id:'age3_observatoire', name:'Observatoire', age:3, color:'green', cost:{coins:0,resources:{stone:1,papyrus:1}}, effect:{science:'globe'}, chain_from:'age2_laboratoire', victory_points:2 },
+  age3_jardins: { id:'age3_jardins', name:'Jardins', age:3, color:'blue', cost:{coins:0,resources:{clay:2,wood:2}}, effect:{}, chain_from:'age2_statue', victory_points:6 },
+  age3_pantheon: { id:'age3_pantheon', name:'Panthéon', age:3, color:'blue', cost:{coins:0,resources:{clay:1,wood:1,papyrus:2}}, effect:{}, chain_from:'age2_temple', victory_points:6 },
+  age3_palace: { id:'age3_palace', name:'Palace', age:3, color:'blue', cost:{coins:0,resources:{clay:1,stone:1,wood:1,glass:2}}, effect:{}, victory_points:7 },
+  age3_hotel_de_ville: { id:'age3_hotel_de_ville', name:'Hôtel de Ville', age:3, color:'blue', cost:{coins:0,resources:{stone:3,wood:2}}, effect:{}, victory_points:7 },
+  age3_obelisque: { id:'age3_obelisque', name:'Obélisque', age:3, color:'blue', cost:{coins:0,resources:{stone:2,glass:1}}, effect:{}, victory_points:5 },
+  age3_pretoire: { id:'age3_pretoire', name:'Prétoire', age:3, color:'blue', cost:{coins:8,resources:{}}, effect:{}, victory_points:8 },
+  age3_senat: { id:'age3_senat', name:'Sénat', age:3, color:'blue', cost:{coins:0,resources:{clay:2,stone:1,papyrus:1}}, effect:{}, chain_from:'age2_rostres', victory_points:5 },
+  age3_chambre_de_commerce: { id:'age3_chambre_de_commerce', name:'Chambre de Commerce', age:3, color:'yellow', cost:{coins:0,resources:{papyrus:2}}, effect:{coins_per:{color:'gray',amount:3}}, victory_points:3 },
+  age3_port: { id:'age3_port', name:'Port', age:3, color:'yellow', cost:{coins:0,resources:{wood:1,glass:1}}, effect:{coins_per:{color:'brown',amount:2}}, victory_points:3 },
+  age3_armurerie: { id:'age3_armurerie', name:'Armurerie', age:3, color:'yellow', cost:{coins:3,resources:{}}, effect:{coins_per:{color:'red',amount:1}}, victory_points:3 },
+  age3_phare: { id:'age3_phare', name:'Phare', age:3, color:'yellow', cost:{coins:0,resources:{clay:1,glass:1}}, effect:{coins_per:{color:'yellow',amount:1}}, chain_from:'age1_taverne', victory_points:3 },
+  age3_arene: { id:'age3_arene', name:'Arène', age:3, color:'yellow', cost:{coins:0,resources:{clay:1,stone:1,wood:1}}, effect:{coins_per:{type:'wonder',amount:2}}, chain_from:'age2_brasserie', victory_points:3 },
+  // GUILDES
+  guilde_commercants: { id:'guilde_commercants', name:'Guilde des Commerçants', age:'g', color:'purple', cost:{coins:0,resources:{clay:1,stone:1,glass:1,papyrus:1}}, effect:{guild:'yellow'}, victory_points:0 },
+  guilde_armateurs: { id:'guilde_armateurs', name:'Guilde des Armateurs', age:'g', color:'purple', cost:{coins:0,resources:{stone:1,clay:1,glass:1,papyrus:1}}, effect:{guild:'brown_gray'}, victory_points:0 },
+  guilde_batisseurs: { id:'guilde_batisseurs', name:'Guilde des Bâtisseurs', age:'g', color:'purple', cost:{coins:0,resources:{stone:2,clay:1,glass:1}}, effect:{guild:'wonder'}, victory_points:0 },
+  guilde_magistrats: { id:'guilde_magistrats', name:'Guilde des Magistrats', age:'g', color:'purple', cost:{coins:0,resources:{wood:2,clay:1,papyrus:1}}, effect:{guild:'blue'}, victory_points:0 },
+  guilde_scientifiques: { id:'guilde_scientifiques', name:'Guilde des Scientifiques', age:'g', color:'purple', cost:{coins:0,resources:{clay:2,wood:2}}, effect:{guild:'green'}, victory_points:0 },
+  guilde_usuriers: { id:'guilde_usuriers', name:'Guilde des Usuriers', age:'g', color:'purple', cost:{coins:0,resources:{stone:1,clay:1,glass:1,papyrus:1}}, effect:{guild:'coins'}, victory_points:0 },
+  guilde_tacticiens: { id:'guilde_tacticiens', name:'Guilde des Tacticiens', age:'g', color:'purple', cost:{coins:0,resources:{stone:2,clay:1,papyrus:1}}, effect:{guild:'red'}, victory_points:0 },
+};
+
+const WONDER_DATA = [
+  { id:'circus_maximus', name:'Circus Maximus', cost:{stone:2,wood:1,glass:1}, effects:[{type:'destroy_card',color:'gray'},{type:'shields',amount:1},{type:'vp',amount:3}], desc:'Détruire 1 carte grise adverse. +1 bouclier. +3 PV.' },
+  { id:'colosse', name:'Colosse', cost:{clay:3,glass:1}, effects:[{type:'shields',amount:2},{type:'vp',amount:3}], desc:'+2 boucliers. +3 PV.' },
+  { id:'grand_phare', name:'Grand Phare', cost:{clay:1,stone:1,papyrus:2}, effects:[{type:'produce_choice',res:['stone','clay','wood']},{type:'vp',amount:4}], desc:'Produit Pierre/Argile/Bois au choix. +4 PV.' },
+  { id:'jardins_suspendus', name:'Jardins Suspendus', cost:{clay:2,glass:1,papyrus:1}, effects:[{type:'coins',amount:6},{type:'replay'},{type:'vp',amount:3}], desc:'+6 pièces. Rejouer. +3 PV.' },
+  { id:'grande_bibliotheque', name:'Grande Bibliothèque', cost:{wood:3,glass:1,papyrus:1}, effects:[{type:'choose_progress'},{type:'vp',amount:4}], desc:'Choisir 1 jeton Progrès parmi 3 écartés. +4 PV.' },
+  { id:'mausolee', name:'Mausolée', cost:{clay:2,glass:2,papyrus:1}, effects:[{type:'build_discard'},{type:'vp',amount:2}], desc:'Construire gratuitement une carte de la défausse. +2 PV.' },
+  { id:'piree', name:'Pirée', cost:{wood:2,stone:1,clay:1}, effects:[{type:'produce_choice',res:['glass','papyrus']},{type:'replay'},{type:'vp',amount:2}], desc:'Produit Verre/Papyrus au choix. Rejouer. +2 PV.' },
+  { id:'pyramides', name:'Pyramides', cost:{stone:3,papyrus:1}, effects:[{type:'vp',amount:9}], desc:'+9 PV.' },
+  { id:'sphinx', name:'Sphinx', cost:{clay:1,stone:1,glass:2}, effects:[{type:'replay'},{type:'vp',amount:6}], desc:'Rejouer. +6 PV.' },
+  { id:'statue_de_zeus', name:'Statue de Zeus', cost:{clay:1,wood:1,papyrus:2,stone:1}, effects:[{type:'destroy_card',color:'brown'},{type:'shields',amount:1},{type:'vp',amount:3}], desc:'Détruire 1 carte marron adverse. +1 bouclier. +3 PV.' },
+  { id:'temple_artemis', name:"Temple d'Artémis", cost:{wood:1,stone:1,glass:1,papyrus:1}, effects:[{type:'coins',amount:12},{type:'replay'}], desc:'+12 pièces. Rejouer.' },
+  { id:'via_appia', name:'Via Appia', cost:{stone:2,clay:2,papyrus:1}, effects:[{type:'coins',amount:3},{type:'opponent_coins',amount:-3},{type:'replay'},{type:'vp',amount:3}], desc:'+3 pièces. Adversaire perd 3 pièces. Rejouer. +3 PV.' },
+];
+
+const PROGRESS_DATA = [
+  { id:'agriculture', name:'Agriculture', icon:'🌾', effect:'Prendre 6 pièces. +4 PV fin de partie.' },
+  { id:'architecture', name:'Architecture', icon:'🏛', effect:'Prochaines Merveilles coûtent 2 ressources de moins.' },
+  { id:'economie', name:'Économie', icon:'💹', effect:'Récupérer les pièces que l\'adversaire paie pour acheter des ressources.' },
+  { id:'loi', name:'Loi', icon:'⚖', effect:'Apporte 1 symbole scientifique.' },
+  { id:'maconnerie', name:'Maçonnerie', icon:'🧱', effect:'Prochains bâtiments civils (bleus) coûtent 2 ressources de moins.' },
+  { id:'mathematiques', name:'Mathématiques', icon:'📐', effect:'+3 PV par jeton Progrès en possession (ce jeton compris).' },
+  { id:'philosophie', name:'Philosophie', icon:'📜', effect:'+7 PV en fin de partie.' },
+  { id:'strategie', name:'Stratégie', icon:'♟', effect:'Prochains bâtiments militaires ont +1 bouclier supplémentaire.' },
+  { id:'theologie', name:'Théologie', icon:'✝', effect:'Prochaines Merveilles ont l\'effet Rejouer.' },
+  { id:'urbanisme', name:'Urbanisme', icon:'🏙', effect:'+6 pièces maintenant. Chaque construction gratuite par chaînage rapporte +4 pièces.' },
+];
+
+const SCIENCE_SYMBOLS = ['gear','compass','quill','mortar','wheel','astrolabe','pen','sundial','globe','loi'];
+const SCIENCE_ICONS = { gear:'⚙', compass:'🧭', quill:'✒', mortar:'⚗', wheel:'🎡', astrolabe:'🔭', pen:'🖊', sundial:'☀', globe:'🌐', loi:'⚖' };
+
+const RES_ICONS = { wood:'🪵', stone:'🪨', clay:'🧱', glass:'💎', papyrus:'📜' };
+const RES_NAMES = { wood:'Bois', stone:'Pierre', clay:'Argile', glass:'Verre', papyrus:'Papyrus' };
+
+// STRUCTURE LAYOUTS — conformes aux règles officielles (image p.20)
+// "visible" = indices locaux dans la rangée qui sont face visible (0-based)
+// Âge I : pyramide descendante 2-3-4-5-6, alternance V-C-V-C-V
+// Âge II : pyramide inversée 6-5-4-3-2, alternance V-C-V-C-V
+// Âge III : losange 2-3-4-2(décalées)-4-3-2, alternance V-C-V-C-V-C-V
+// Pour l'Âge III, R4 (2 cartes décalées) a une propriété spéciale "offset:true"
+// qui décale visuellement ces cartes d'un demi-emplacement vers la droite
+const AGE_STRUCTURES = {
+  1: [
+    { row: [0,1],               visible: [0,1],         hidden: false },  // R1: 2 VISIBLES
+    { row: [2,3,4],             visible: [],             hidden: true  },  // R2: 3 CACHÉES
+    { row: [5,6,7,8],           visible: [0,1,2,3],     hidden: false },  // R3: 4 VISIBLES
+    { row: [9,10,11,12,13],     visible: [],             hidden: true  },  // R4: 5 CACHÉES
+    { row: [14,15,16,17,18,19], visible: [0,1,2,3,4,5], hidden: false },  // R5: 6 VISIBLES
+  ],
+  2: [
+    { row: [0,1,2,3,4,5],   visible: [0,1,2,3,4,5], hidden: false },  // R1: 6 VISIBLES
+    { row: [6,7,8,9,10],    visible: [],             hidden: true  },  // R2: 5 CACHÉES
+    { row: [11,12,13,14],   visible: [0,1,2,3],     hidden: false },  // R3: 4 VISIBLES
+    { row: [15,16,17],      visible: [],             hidden: true  },  // R4: 3 CACHÉES
+    { row: [18,19],         visible: [0,1],          hidden: false },  // R5: 2 VISIBLES
+  ],
+  3: [
+    // Losange — total 23 cartes (20 age3 + 3 guildes)
+    // R4 : 2 cartes avec un GAP au centre — modélisé comme 4 slots dont 2 fantômes (null) au milieu
+    { row: [0,1],               visible: [0,1],         hidden: false },  // R1: 2 VISIBLES
+    { row: [2,3,4],             visible: [],             hidden: true  },  // R2: 3 CACHÉES
+    { row: [5,6,7,8],           visible: [0,1,2,3],     hidden: false },  // R3: 4 VISIBLES
+    { row: [9,null,null,10],    visible: [],             hidden: true  },  // R4: 2 CACHÉES séparées (null = espace)
+    { row: [11,12,13,14],       visible: [0,1,2,3],     hidden: false },  // R5: 4 VISIBLES
+    { row: [15,16,17],          visible: [],             hidden: true  },  // R6: 3 CACHÉES
+    { row: [18,19],             visible: [0,1],          hidden: false },  // R7: 2 VISIBLES
+    { row: [20,21,22],          visible: [0,1,2],        hidden: false },  // R8: 3 GUILDES VISIBLES
+  ]
+};
+
+// ===================================================
+// GAME STATE
+// ===================================================
+let G = {};
+
+function initGame() {
+  const allWonders = [...WONDER_DATA];
+  shuffle(allWonders);
+
+  const allTokens = [...PROGRESS_DATA];
+  shuffle(allTokens);
+
+  G = {
+    age: 0, // 0 = draft phase
+    currentPlayer: 1,
+    players: {
+      1: { coins: 7, cards: [], wonders: [], progressTokens: [], choiceCards: [], scienceSymbols: [], tradeDiscounts: {} },
+      2: { coins: 7, cards: [], wonders: [], progressTokens: [], choiceCards: [], scienceSymbols: [], tradeDiscounts: {} }
+    },
+    conflictPos: 0,
+    militaryTokensUsed: [],
+    progressTokensAvailable: allTokens.slice(0,5).map(t => ({...t, taken: false})),
+    removedProgressTokens: allTokens.slice(5),
+    discardPile: [],
+    structureCards: [],
+    structureLayout: [],
+    wondersBuilt: 0,
+    log: [],
+    selectedCard: null,
+    selectedWonder: null,
+    pendingAction: null,
+    // Draft state
+    draft: {
+      pool: allWonders,         // all 12 shuffled wonders
+      group: 0,                 // 0 = first group of 4, 1 = second group of 4
+      round: 0,                 // pick index within the sequence
+      // Sequence: group0 → J1 picks 1, J2 picks 2, J1 picks 1
+      //           group1 → J2 picks 1, J1 picks 2, J2 picks 1
+      // Encoded as [ [player, count], ... ]
+      sequences: [
+        [[1,1],[2,2],[1,1]],   // group 0
+        [[2,1],[1,2],[2,1]],   // group 1
+      ],
+      stepIdx: 0,   // index within current sequence
+      stepPicks: 0, // how many picks done in current step
+    }
+  };
+
+  startDraftPhase();
+}
+
+// ===== WONDER DRAFT =====
+function startDraftPhase() {
+  const d = G.draft;
+  const groupStart = d.group * 4;
+  const offered = d.pool.slice(groupStart, groupStart + 4);
+  d.offered = offered;
+  d.stepIdx = 0;
+  d.stepPicks = 0;
+  showDraftOverlay();
+}
+
+function showDraftOverlay() {
+  const d = G.draft;
+  const seq = d.sequences[d.group];
+  const [currentPid, picksInStep] = seq[d.stepIdx];
+  const picksLeft = picksInStep - d.stepPicks;
+
+  const overlay = document.getElementById('draft-overlay');
+  overlay.classList.add('active');
+
+  document.getElementById('draft-title').textContent =
+    `Choix des Merveilles — Groupe ${d.group + 1}/2`;
+  document.getElementById('draft-subtitle').textContent =
+    `Joueur ${currentPid} — choisissez ${picksLeft} Merveille${picksLeft > 1 ? 's' : ''}`;
+  document.getElementById('draft-instruction').textContent =
+    d.group === 0
+      ? 'J1 choisit 1 → J2 choisit 2 → J1 choisit 1 — puis inversé pour le 2e groupe'
+      : 'J2 choisit 1 → J1 choisit 2 → J2 choisit 1';
+
+  const container = document.getElementById('draft-wonders');
+  container.innerHTML = '';
+  d.offered.forEach((w, i) => {
+    const card = buildWonderCardElement(w, true);
+    if (w._taken) {
+      card.classList.add('wonder-taken');
+    } else {
+      card.onclick = () => draftPickWonder(i);
+    }
+    container.appendChild(card);
+  });
+}
+
+function draftPickWonder(offerIdx) {
+  const d = G.draft;
+  const w = d.offered[offerIdx];
+  if (w._taken) return;
+
+  const seq = d.sequences[d.group];
+  const [currentPid] = seq[d.stepIdx];
+
+  // Assign wonder to current player
+  w._taken = true;
+  G.players[currentPid].wonders.push({...w, built: false});
+  addLog(`J${currentPid} choisit ${w.name}`);
+
+  d.stepPicks++;
+  const picksInStep = seq[d.stepIdx][1];
+
+  if (d.stepPicks >= picksInStep) {
+    // Move to next step in sequence
+    d.stepIdx++;
+    d.stepPicks = 0;
+  }
+
+  if (d.stepIdx >= seq.length) {
+    // Group done
+    d.group++;
+    if (d.group >= 2) {
+      // All 8 wonders assigned — start the game
+      finishDraft();
+    } else {
+      // Start second group
+      const groupStart = d.group * 4;
+      d.offered = d.pool.slice(groupStart, groupStart + 4);
+      d.offered.forEach(w => w._taken = false);
+      d.stepIdx = 0;
+      d.stepPicks = 0;
+      showDraftOverlay();
+    }
+  } else {
+    showDraftOverlay();
+  }
+}
+
+function finishDraft() {
+  document.getElementById('draft-overlay').classList.remove('active');
+  // Start actual game
+  G.age = 1;
+  G.currentPlayer = 1;
+  setupAge(1);
+  renderAll();
+  showPhaseOverlay('Âge I', 'Joueur 1 commence — Bonne chance !', true);
+}
+
+
+function setupAge(age) {
+  G.age = age;
+  
+  // Get age cards
+  const ageKeys = Object.keys(CARD_DATA).filter(k => CARD_DATA[k].age === age);
+  
+  let pool = [...ageKeys];
+  
+  // Add guilds for age 3
+  if (age === 3) {
+    const guilds = Object.keys(CARD_DATA).filter(k => CARD_DATA[k].age === 'g');
+    shuffle(guilds);
+    pool = [...pool, ...guilds.slice(0,3)];
+  }
+  
+  shuffle(pool);
+  
+  // Remove 3 random non-guild cards before the game (as per rules)
+  const nonGuilds = pool.filter(k => CARD_DATA[k].age === age);
+  const nonGuildPool = [...nonGuilds];
+  shuffle(nonGuildPool);
+  const toRemove = nonGuildPool.slice(0, 3);
+  pool = pool.filter(k => !toRemove.includes(k));
+  
+  // Final pool size: 20 for age 1&2, 23 for age 3 (20 age3 cards + 3 guilds)
+  const targetCount = age === 3 ? 23 : 20;
+  G.structureCards = pool.slice(0, targetCount);
+  G.structureLayout = buildLayout(age, G.structureCards.length);
+  G.selectedCard = null;
+  G.selectedWonder = null;
+  
+  document.getElementById('age-indicator').textContent = `Âge ${['I','II','III'][age-1]}`;
+  document.getElementById('structure-title').textContent = `✦ STRUCTURE DE L'ÂGE ${['I','II','III'][age-1]} ✦`;
+}
+
+function buildLayout(age, count) {
+  const struct = AGE_STRUCTURES[age];
+  let cardIdx = 0;
+  const layout = [];
+  for (const rowDef of struct) {
+    const rowSlots = [];
+    const allHidden = rowDef.hidden === true;
+    for (let i = 0; i < rowDef.row.length; i++) {
+      const cardRef = rowDef.row[i];
+      if (cardRef === null) {
+        // Espace fantôme pour l'alignement visuel (ex. R4 Âge III)
+        rowSlots.push({ structIdx: null, cardId: null, removed: true, visible: false, accessible: false, phantom: true });
+      } else {
+        const isVisible = !allHidden && (rowDef.visible.length === 0 ? false : rowDef.visible.includes(i));
+        rowSlots.push({
+          structIdx: cardIdx,
+          cardId: G.structureCards[cardIdx] || null,
+          visible: isVisible,
+          removed: false,
+          accessible: false,
+          phantom: false
+        });
+        cardIdx++;
+      }
+    }
+    layout.push({ slots: rowSlots, offset: rowDef.offset || 0 });
+  }
+  return layout;
+}
+
+// Accessibility is computed by computeAccessibility() below
+function computeAccessibility() {
+  for (let r = 0; r < G.structureLayout.length; r++) {
+    const row = G.structureLayout[r];
+    const rowSlots = row.slots;
+    const rowLen = rowSlots.length;
+
+    for (let c = 0; c < rowLen; c++) {
+      const slot = rowSlots[c];
+      if (slot.phantom || !slot.cardId || slot.removed) {
+        slot.accessible = false;
+        continue;
+      }
+
+      let covered = false;
+
+      if (r < G.structureLayout.length - 1) {
+        const belowRow = G.structureLayout[r + 1];
+        const belowSlots = belowRow.slots;
+        const belowLen = belowSlots.length;
+
+        // offset accounts for half-card visual shifts (e.g. Age III R4)
+        // The "effective column" of card c in row r, in the coordinate system of row r+1:
+        // offset = (belowLen - rowLen) / 2  +  belowRow.offset - row.offset
+        const structOffset = (belowLen - rowLen) / 2 + (belowRow.offset || 0) - (row.offset || 0);
+
+        const bMin = Math.round(c + structOffset - 0.5);
+        const bMax = Math.round(c + structOffset + 0.4);
+
+        for (let b = Math.max(0, bMin); b <= Math.min(belowLen - 1, bMax); b++) {
+          if (!belowSlots[b].phantom && belowSlots[b].cardId && !belowSlots[b].removed) {
+            covered = true;
+            break;
+          }
+        }
+      }
+
+      slot.accessible = !covered;
+      // Reveal if now accessible and was hidden
+      if (slot.accessible && !slot.visible) {
+        slot.visible = true;
+      }
+    }
+  }
+}
+
+// ===================================================
+// RENDERING
+// ===================================================
+function renderAll() {
+  renderStructure();
+  renderPlayerBoards();
+  renderMilitaryTrack();
+  renderProgressTokens();
+  renderActionPanel();
+}
+
+// ===== WONDER CARD RENDERING =====
+const WONDER_ART = {
+  circus_maximus: '🎪', colosse: '🗿', grand_phare: '🔦',
+  jardins_suspendus: '🌿', grande_bibliotheque: '📚', mausolee: '⚱',
+  piree: '⚓', pyramides: '△', sphinx: '🦁',
+  statue_de_zeus: '⚡', temple_artemis: '🏹', via_appia: '🛤',
+};
+const WONDER_GRAD = {
+  circus_maximus: 'linear-gradient(135deg,#8b2020,#3a0a0a)',
+  colosse:        'linear-gradient(135deg,#3a6080,#1a3050)',
+  grand_phare:    'linear-gradient(135deg,#206080,#0a2840)',
+  jardins_suspendus:'linear-gradient(135deg,#205a20,#0a2a0a)',
+  grande_bibliotheque:'linear-gradient(135deg,#5a4010,#2a1a08)',
+  mausolee:       'linear-gradient(135deg,#604080,#201030)',
+  piree:          'linear-gradient(135deg,#204880,#0a2040)',
+  pyramides:      'linear-gradient(135deg,#806020,#3a2a08)',
+  sphinx:         'linear-gradient(135deg,#806040,#3a2010)',
+  statue_de_zeus: 'linear-gradient(135deg,#204070,#0a1838)',
+  temple_artemis: 'linear-gradient(135deg,#182840,#0a1828)',
+  via_appia:      'linear-gradient(135deg,#503010,#281808)',
+};
+
+function buildWonderCardElement(w, forDraft = false) {
+  const div = document.createElement('div');
+  div.className = forDraft ? 'wonder-card' : 'wonder-slot';
+
+  // Left: cost
+  const costDiv = document.createElement('div');
+  costDiv.className = forDraft ? 'wonder-card-cost' : 'wonder-card-cost';
+  costDiv.style.cssText = forDraft
+    ? 'width:32px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:rgba(0,0,0,0.55);padding:5px 3px;z-index:3'
+    : 'width:26px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:rgba(0,0,0,0.55);padding:4px 2px;z-index:3';
+  const iconSize = forDraft ? '22px' : '18px';
+  Object.entries(w.cost).forEach(([res, amt]) => {
+    for (let i = 0; i < amt; i++) {
+      const ico = document.createElement('div');
+      ico.className = 'wonder-res-icon';
+      ico.style.cssText = `width:${iconSize};height:${iconSize};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:${forDraft?'0.75':'0.6'}rem;border:1px solid rgba(255,255,255,0.25);background:rgba(0,0,0,0.4);`;
+      ico.textContent = RES_ICONS[res] || res;
+      ico.title = RES_NAMES[res] || res;
+      costDiv.appendChild(ico);
+    }
+  });
+
+  // Center: art
+  const artDiv = document.createElement('div');
+  artDiv.style.cssText = 'flex:1;position:relative;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;';
+  const bg = document.createElement('div');
+  bg.style.cssText = `position:absolute;inset:0;background:${WONDER_GRAD[w.id]||'linear-gradient(135deg,#3a2010,#1a0a08)'};`;
+  artDiv.appendChild(bg);
+  const artIco = document.createElement('div');
+  artIco.style.cssText = `font-size:${forDraft?'3':'2.2'}rem;position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);opacity:0.4;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.8));`;
+  artIco.textContent = WONDER_ART[w.id] || '🏛';
+  artDiv.appendChild(artIco);
+  const nameBar = document.createElement('div');
+  nameBar.style.cssText = `position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);padding:${forDraft?'4px 6px':'3px 4px'};font-family:'Cinzel',serif;font-size:${forDraft?'0.5':'0.42'}rem;font-weight:700;text-align:center;color:#f0d880;letter-spacing:0.5px;text-transform:uppercase;z-index:3;`;
+  nameBar.textContent = w.name;
+  artDiv.appendChild(nameBar);
+
+  // Right: effects
+  const effDiv = document.createElement('div');
+  effDiv.style.cssText = `width:${forDraft?'40':'32'}px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${forDraft?5:3}px;background:rgba(0,0,0,0.55);padding:5px 3px;z-index:3`;
+  const effSize = forDraft ? '30px' : '24px';
+  const effFont = forDraft ? '0.8rem' : '0.65rem';
+
+  w.effects.forEach(e => {
+    const ico = document.createElement('div');
+    ico.style.cssText = `width:${effSize};height:${effSize};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:${effFont};font-weight:900;border:1.5px solid rgba(255,255,255,0.3);flex-shrink:0;`;
+    if (e.type === 'vp') {
+      ico.style.background = 'radial-gradient(circle,#f5d060,#a07010)';
+      ico.style.borderColor = '#f0e060';
+      ico.style.color = '#2a1a00';
+      ico.textContent = e.amount;
+      ico.title = `${e.amount} Points de victoire`;
+    } else if (e.type === 'coins') {
+      ico.style.background = 'radial-gradient(circle,#f5d060,#c09010)';
+      ico.style.borderColor = '#f0d050';
+      ico.style.color = '#3a2000';
+      ico.style.fontSize = forDraft ? '0.6rem' : '0.5rem';
+      ico.textContent = `+${e.amount}🪙`;
+      ico.title = `+${e.amount} pièces`;
+    } else if (e.type === 'shields') {
+      ico.style.background = 'radial-gradient(circle,#e05030,#8b1a10)';
+      ico.style.borderColor = '#e74c3c';
+      ico.textContent = `🛡${e.amount}`;
+      ico.title = `${e.amount} bouclier(s)`;
+    } else if (e.type === 'replay') {
+      ico.style.background = 'radial-gradient(circle,#4080d0,#204880)';
+      ico.style.borderColor = '#5090e0';
+      ico.textContent = '↺';
+      ico.title = 'Rejouer';
+    } else if (e.type === 'destroy_card') {
+      ico.style.background = 'radial-gradient(circle,#803020,#401008)';
+      ico.style.borderColor = '#c04020';
+      ico.textContent = '💥';
+      ico.title = `Détruire une carte ${e.color === 'brown' ? 'marron' : 'grise'} adverse`;
+    } else if (e.type === 'produce_choice') {
+      ico.style.background = 'radial-gradient(circle,#408040,#204020)';
+      ico.style.borderColor = '#60a060';
+      ico.textContent = e.res.map(r => RES_ICONS[r]).join('');
+      ico.style.fontSize = forDraft ? '0.55rem' : '0.45rem';
+      ico.title = 'Produit au choix';
+    } else if (e.type === 'choose_progress') {
+      ico.style.background = 'radial-gradient(circle,#806020,#403010)';
+      ico.style.borderColor = '#c09030';
+      ico.textContent = '📜';
+      ico.title = 'Choisir un jeton Progrès';
+    } else if (e.type === 'build_discard') {
+      ico.style.background = 'radial-gradient(circle,#605080,#302840)';
+      ico.style.borderColor = '#907090';
+      ico.textContent = '🃏';
+      ico.title = 'Construire depuis la défausse';
+    } else if (e.type === 'opponent_coins') {
+      ico.style.background = 'radial-gradient(circle,#803030,#401010)';
+      ico.style.borderColor = '#c04040';
+      ico.style.fontSize = forDraft ? '0.55rem' : '0.45rem';
+      ico.textContent = `${e.amount}🪙`;
+      ico.title = `Adversaire perd ${Math.abs(e.amount)} pièces`;
+    }
+    effDiv.appendChild(ico);
+  });
+
+  div.appendChild(costDiv);
+  div.appendChild(artDiv);
+  div.appendChild(effDiv);
+  return div;
+}
+
+function renderStructure() {
+  computeAccessibility();
+  const container = document.getElementById('card-structure');
+  container.innerHTML = '';
+
+  for (let r = 0; r < G.structureLayout.length; r++) {
+    const rowData = G.structureLayout[r];
+    const rowSlots = rowData.slots;
+    const rowOffset = rowData.offset || 0;
+
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'structure-row';
+    rowDiv.style.cssText = `display:flex; justify-content:center; gap:4px; margin-bottom:3px;`;
+
+    for (let c = 0; c < rowSlots.length; c++) {
+      const slot = rowSlots[c];
+      const div = document.createElement('div');
+      div.className = 'card-slot';
+
+      if (!slot.cardId || slot.removed) {
+        div.classList.add('card-removed');
+        if (slot.phantom) {
+          // Espace fantôme : transparent mais garde la place
+          div.style.background = 'transparent';
+          div.style.border = 'none';
+          div.style.boxShadow = 'none';
+          div.style.pointerEvents = 'none';
+        }
+      } else if (!slot.visible) {
+        div.classList.add('card-hidden');
+      } else {
+        const card = CARD_DATA[slot.cardId];
+        div.classList.add(`color-${card.color}`);
+
+        if (slot.accessible) {
+          div.classList.add('card-accessible');
+          div.onclick = () => selectCard(slot.cardId, r, c);
+        } else {
+          div.classList.add('card-inaccessible');
+        }
+        if (G.selectedCard === slot.cardId) div.classList.add('card-selected');
+
+        div.innerHTML = buildCardHTML(card);
+
+        // Info button
+        const infoBtn = document.createElement('div');
+        infoBtn.className = 'card-info-btn';
+        infoBtn.textContent = 'i';
+        infoBtn.onclick = (e) => { e.stopPropagation(); showCardModal(slot.cardId); };
+        div.appendChild(infoBtn);
+      }
+
+      rowDiv.appendChild(div);
+    }
+    container.appendChild(rowDiv);
+  }
+}
+
+function buildCardHTML(card) {
+  // === HEADER: coût en ressources + pièces ===
+  let headerContent = '';
+  const cost = card.cost || {};
+  if (cost.coins > 0) {
+    headerContent += `<div class="card-cost-icon cost-coin">${cost.coins}</div>`;
+  }
+  if (cost.resources) {
+    const resOrder = ['wood','stone','clay','glass','papyrus'];
+    resOrder.forEach(r => {
+      if (cost.resources[r]) {
+        for (let i = 0; i < cost.resources[r]; i++) {
+          headerContent += `<div class="card-cost-icon cost-${r}">${RES_ICONS[r]}</div>`;
+        }
+      }
+    });
+  }
+  if (!headerContent) headerContent = `<span style="font-size:0.55rem;color:rgba(255,255,255,0.6);font-style:italic">libre</span>`;
+
+  // === ART ZONE: icône centrale selon le type ===
+  const artIcon = getCardArtIcon(card);
+  let effectBadge = '';
+  const e = card.effect || {};
+  if (e.shields)           effectBadge = `<div class="card-effect-badge">🛡×${e.shields}</div>`;
+  else if (e.science)      effectBadge = `<div class="card-effect-badge">${SCIENCE_ICONS[e.science]||'🔬'}</div>`;
+  else if (e.produces)     { const [r,a] = Object.entries(e.produces)[0]; effectBadge = `<div class="card-effect-badge">${RES_ICONS[r]}×${a}</div>`; }
+  else if (e.produces_choice) effectBadge = `<div class="card-effect-badge">${e.produces_choice.map(r=>RES_ICONS[r]).join('/')}</div>`;
+  else if (e.coins_immediate) effectBadge = `<div class="card-effect-badge">+${e.coins_immediate}🪙</div>`;
+  else if (e.trade_discount)  effectBadge = `<div class="card-effect-badge">${Object.keys(e.trade_discount).map(r=>RES_ICONS[r]).join('')}↓</div>`;
+  else if (e.coins_per)       effectBadge = `<div class="card-effect-badge">+🪙/${e.coins_per.color||'?'}</div>`;
+  else if (e.guild)           effectBadge = `<div class="card-effect-badge">🪙+⭐</div>`;
+
+  // VP badge
+  const vp = card.victory_points || 0;
+  const vpBadge = vp > 0 ? `<div class="card-vp-badge">${vp}</div>` : '';
+
+  // Chain dot
+  const chainDot = card.chain_to ? `<div class="card-chain-dot"></div>` : '';
+
+  // === FOOTER: nom ===
+  const shortName = card.name.length > 13 ? card.name.substring(0,12)+'…' : card.name;
+
+  return `
+    <div class="card-header">${headerContent}</div>
+    <div class="card-art">
+      <div class="card-art-bg"></div>
+      <div class="card-art-icon">${artIcon}</div>
+      ${effectBadge}
+    </div>
+    ${vpBadge}
+    ${chainDot}
+    <div class="card-footer"><span class="card-footer-name">${shortName}</span></div>
+  `;
+}
+
+function getCardArtIcon(card) {
+  const icons = {
+    // Brown
+    age1_chantier: '🪵', age1_exploitation: '🪨', age1_bassin_argileux: '🧱',
+    age1_cavite: '🪵', age1_gisement: '🪨', age1_mine: '⛏',
+    age2_scierie: '🪵', age2_briqueterie: '🧱', age2_carriere: '🪨',
+    // Gray
+    age1_verrerie: '💎', age1_presse: '📜', age2_soufflerie: '💎', age2_sechoir: '📜',
+    // Red
+    age1_tour_de_garde: '🗼', age1_ecuries: '🐎', age1_caserne: '⚔', age1_palissade: '🛡',
+    age2_muraille: '🏰', age2_haras: '🐎', age2_baraquements: '⚔', age2_champ_de_tir: '🏹', age2_place_darmes: '⚔',
+    age3_arsenal: '⚔', age3_atelier_siege: '🏹', age3_fortifications: '🏰', age3_cirque: '🎪',
+    // Green
+    age1_atelier: '⚙', age1_apothicaire: '🧭', age1_scriptorium: '✒', age1_officine: '⚗',
+    age2_bibliotheque: '📚', age2_dispensaire: '⚗', age2_ecole: '🎡', age2_laboratoire: '⚙',
+    age3_academie: '🔭', age3_etude: '🖊', age3_universite: '☀', age3_observatoire: '🌐',
+    // Blue
+    age1_theatre: '🎭', age1_autel: '🕍', age1_bains: '🚿',
+    age2_statue: '🗿', age2_temple: '⛪', age2_aqueduc: '🏛', age2_rostres: '🏛', age2_tribunal: '⚖',
+    age3_jardins: '🌿', age3_pantheon: '⛩', age3_palace: '🏯', age3_hotel_de_ville: '🏛', age3_obelisque: '🗼', age3_pretoire: '⚖', age3_senat: '🏛',
+    // Yellow
+    age1_taverne: '🍺', age1_depot_pierre: '🪨', age1_depot_argile: '🧱', age1_depot_bois: '🪵',
+    age2_forum: '🏛', age2_caravanserail: '🐪', age2_douanes: '📦', age2_brasserie: '🍺',
+    age3_chambre_de_commerce: '💼', age3_port: '⚓', age3_armurerie: '⚔', age3_phare: '🔦', age3_arene: '🎪',
+    // Purple guilds
+    guilde_commercants: '💰', guilde_armateurs: '⚓', guilde_batisseurs: '🏗',
+    guilde_magistrats: '⚖', guilde_scientifiques: '🔬', guilde_usuriers: '💰', guilde_tacticiens: '♟',
+  };
+  return icons[card.id] || (card.color === 'brown' ? '🪵' : card.color === 'gray' ? '💎' : card.color === 'red' ? '⚔' : card.color === 'green' ? '🔬' : card.color === 'blue' ? '🏛' : card.color === 'yellow' ? '💰' : '👑');
+}
+
+function renderPlayerBoards() {
+  for (const pid of [1, 2]) {
+    const p = G.players[pid];
+    
+    // Stats
+    document.getElementById(`p${pid}-coins`).textContent = p.coins;
+    document.getElementById(`p${pid}-vp`).textContent = estimateVP(pid);
+    document.getElementById(`p${pid}-shields`).textContent = getTotalShields(pid);
+    
+    // Science symbols
+    const sciDiv = document.getElementById(`p${pid}-science`);
+    sciDiv.innerHTML = '';
+    p.scienceSymbols.forEach(sym => {
+      const s = document.createElement('div');
+      s.className = 'sci-sym';
+      s.textContent = SCIENCE_ICONS[sym] || '?';
+      sciDiv.appendChild(s);
+    });
+    // Check 6 different = victory warning
+    const uniqueSci = new Set(p.scienceSymbols).size;
+    if (uniqueSci >= 5) {
+      const warn = document.createElement('span');
+      warn.className = 'science-win-warning';
+      warn.textContent = uniqueSci >= 6 ? '🏆' : '⚠';
+      sciDiv.appendChild(warn);
+    }
+    
+    // Resources
+    const resDiv = document.getElementById(`p${pid}-resources-row`);
+    if (resDiv) {
+      resDiv.innerHTML = '';
+      const totRes = getTotalResources(pid);
+      for (const [res, amt] of Object.entries(totRes)) {
+        if (amt > 0) {
+          const chip = document.createElement('div');
+          chip.className = `resource-chip res-${res}`;
+          chip.textContent = `${RES_ICONS[res]} ${amt}`;
+          resDiv.appendChild(chip);
+        }
+      }
+    }
+    
+    // Built cards
+    const builtDiv = document.getElementById(`built-p${pid}`);
+    if (builtDiv) {
+      builtDiv.innerHTML = '';
+      p.cards.forEach(cardId => {
+        const card = CARD_DATA[cardId];
+        const mini = document.createElement('div');
+        mini.className = `built-card-mini mini-${card.color}`;
+        mini.textContent = card.name.length > 10 ? card.name.substring(0,9)+'…' : card.name;
+        mini.title = card.name;
+        mini.onclick = () => showCardModal(cardId);
+        builtDiv.appendChild(mini);
+      });
+    }
+    
+    // Progress tokens
+    const ptDiv = document.getElementById(`p${pid}-progress-tokens`);
+    if (ptDiv) {
+      ptDiv.innerHTML = '';
+      p.progressTokens.forEach(tok => {
+        const t = PROGRESS_DATA.find(x => x.id === tok);
+        if (!t) return;
+        const btn = document.createElement('div');
+        btn.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:rgba(90,90,150,0.3);border:1px solid #6a6ab0;border-radius:12px;padding:2px 8px;margin:2px;font-size:0.7rem;cursor:pointer;';
+        btn.innerHTML = `${t.icon} <span>${t.name}</span>`;
+        btn.title = t.effect;
+        btn.onclick = () => showProgressModal(t);
+        ptDiv.appendChild(btn);
+      });
+    }
+    
+    // Wonders
+    const wonderDiv = document.getElementById(`wonders-p${pid}`);
+    if (wonderDiv) {
+      wonderDiv.innerHTML = '';
+      p.wonders.forEach((w, i) => {
+        const slot = buildWonderCardElement(w, false);
+        if (w.built) slot.classList.add('wonder-built');
+        if (G.selectedWonder && G.selectedWonder.pid === pid && G.selectedWonder.idx === i) {
+          slot.classList.add('wonder-selected');
+        }
+        if (!w.built) {
+          slot.onclick = (e) => { e.stopPropagation(); selectWonder(pid, i); };
+          const infoBtn = document.createElement('div');
+          infoBtn.className = 'card-info-btn';
+          infoBtn.textContent = 'i';
+          infoBtn.style.zIndex = '20';
+          infoBtn.onclick = (e) => { e.stopPropagation(); showWonderModal(w); };
+          slot.appendChild(infoBtn);
+        }
+        wonderDiv.appendChild(slot);
+      });
+    }
+  }
+  
+  // Active player board highlight
+  document.getElementById('board-p1').classList.toggle('active-player', G.currentPlayer === 1);
+  document.getElementById('board-p2').classList.toggle('active-player', G.currentPlayer === 2);
+  
+  const banner = document.getElementById('current-player-banner');
+  banner.textContent = `Tour de Joueur ${G.currentPlayer}`;
+  banner.className = G.currentPlayer === 1 ? 'player1-turn' : 'player2-turn';
+}
+
+function renderMilitaryTrack() {
+  const track = document.getElementById('conflict-track');
+  track.innerHTML = '';
+
+  // 19 cases : de -9 (capitale J2) à +9 (capitale J1)
+  // Jetons pénalité : ±2 et ±5  (joueur côté adverse perd des pièces quand le pion y entre)
+  // Valeurs PV militaires : pos ≤-7 → J2:10, ≤-4 → J2:5, ≤-1 → J2:2, 0 → 0, ≥1 → J1:2, ≥4 → J1:5, ≥7 → J1:10
+  for (let pos = -9; pos <= 9; pos++) {
+    const cell = document.createElement('div');
+    cell.className = 'track-cell';
+    cell.style.position = 'relative';
+
+    // Styling par zone
+    if (pos === 0) {
+      cell.classList.add('center');
+    } else if (pos < 0) {
+      cell.classList.add('p2-zone');
+      if (pos === -9) cell.classList.add('p2-capital');
+    } else {
+      cell.classList.add('p1-zone');
+      if (pos === 9) cell.classList.add('p1-capital');
+    }
+
+    // Jetons pénalité
+    if (pos === -2 || pos === 2) {
+      cell.classList.add('penalty-2');
+      cell.innerHTML = '<span style="font-size:0.55rem;line-height:1">-2<br>💰</span>';
+    } else if (pos === -5 || pos === 5) {
+      cell.classList.add('penalty-5');
+      cell.innerHTML = '<span style="font-size:0.55rem;line-height:1">-5<br>💰</span>';
+    } else if (pos === -9) {
+      cell.innerHTML = '<span style="font-size:1rem">🏛</span>';
+    } else if (pos === 9) {
+      cell.innerHTML = '<span style="font-size:1rem">🏛</span>';
+    } else {
+      // Afficher le numéro de la case
+      cell.innerHTML = `<span style="font-size:0.5rem;color:#555">${pos}</span>`;
+    }
+
+    // Pion conflit
+    if (G.conflictPos === pos) {
+      const pawn = document.createElement('div');
+      pawn.className = 'conflict-pawn';
+      pawn.textContent = '⚡';
+      cell.appendChild(pawn);
+    }
+
+    track.appendChild(cell);
+  }
+
+  // Mise à jour boucliers/PV militaires dans les stats joueurs
+  const militaryVP = getMilitaryVP(G.conflictPos);
+  document.getElementById('p1-shields').textContent = `${getTotalShields(1)} 🛡 (${militaryVP.p1 > 0 ? '+' : ''}${militaryVP.p1}PV)`;
+  document.getElementById('p2-shields').textContent = `${getTotalShields(2)} 🛡 (${militaryVP.p2 > 0 ? '+' : ''}${militaryVP.p2}PV)`;
+}
+
+function renderProgressTokens() {
+  const row = document.getElementById('progress-tokens-row');
+  row.innerHTML = '';
+  G.progressTokensAvailable.forEach(tok => {
+    const div = document.createElement('div');
+    div.className = 'progress-token' + (tok.taken ? ' taken' : '');
+    div.innerHTML = `<span>${tok.icon}</span><div class="progress-token-name">${tok.name}</div>`;
+    div.title = tok.effect;
+    div.onclick = () => showProgressModal(tok);
+    row.appendChild(div);
+  });
+}
+
+function renderActionPanel() {
+  const info = document.getElementById('selected-card-info');
+  const btnBuild = document.getElementById('btn-build');
+  const btnDiscard = document.getElementById('btn-discard');
+  const btnWonder = document.getElementById('btn-wonder');
+  
+  if (!G.selectedCard) {
+    info.innerHTML = '<div style="color:#666; font-size:0.8rem; text-align:center; padding:10px 0;">← Sélectionnez une carte accessible pour jouer</div>';
+    btnBuild.disabled = true;
+    btnDiscard.disabled = true;
+    btnWonder.disabled = true;
+    return;
+  }
+  
+  const card = CARD_DATA[G.selectedCard];
+  const p = G.players[G.currentPlayer];
+  const opp = G.players[G.currentPlayer === 1 ? 2 : 1];
+  
+  // Check chain
+  const isChained = canChain(G.currentPlayer, card);
+  const costInfo = computeCardCost(G.currentPlayer, card);
+  const canAfford = isChained ? true : (p.coins >= costInfo.total);
+  
+  // Check wonder availability
+  const hasUnbuiltWonder = p.wonders.some(w => !w.built);
+  
+  let html = `<div class="selected-card-name" style="color:var(--${card.color === 'brown' ? 'gold' : card.color === 'gray' ? 'parchment' : card.color})">${card.name}</div>`;
+  html += `<div class="selected-card-details">`;
+  html += `Type: <strong>${typeLabel(card.color)}</strong>`;
+  
+  if (card.victory_points > 0) html += ` • <strong>${card.victory_points} PV</strong>`;
+  if (card.effect?.shields) html += ` • <strong>${card.effect.shields} 🛡</strong>`;
+  if (card.effect?.science) html += ` • Science: <strong>${SCIENCE_ICONS[card.effect.science]} ${card.effect.science}</strong>`;
+  if (card.effect?.produces) {
+    const res = Object.entries(card.effect.produces).map(([r,a])=>`${a}${RES_ICONS[r]}`).join(' ');
+    html += ` • Produit: <strong>${res}</strong>`;
+  }
+  if (card.effect?.coins_immediate) html += ` • <strong>+${card.effect.coins_immediate}🪙</strong>`;
+  if (card.effect?.trade_discount) {
+    const disc = Object.keys(card.effect.trade_discount).map(r=>RES_ICONS[r]).join('+');
+    html += ` • Remise commerce: <strong>${disc}</strong>`;
+  }
+  html += '</div>';
+  
+  if (isChained) {
+    html += `<div class="chain-notice">⛓ Construction gratuite par chaînage !</div>`;
+  } else {
+    const costParts = [];
+    if (costInfo.coins > 0) costParts.push(`${costInfo.coins}🪙 (coût fixe)`);
+    if (costInfo.tradeCost > 0) costParts.push(`${costInfo.tradeCost}🪙 (commerce)`);
+    html += `<div class="cost-detail ${canAfford ? 'cost-ok' : 'cost-warning'}">
+      Coût total: <span>${costInfo.total}🪙</span> (vous avez ${p.coins}🪙)
+      ${costParts.length ? '<br>Détail: ' + costParts.join(' + ') : ''}
+    </div>`;
+  }
+  
+  // Discard value
+  const discardGain = 2 + p.cards.filter(id => CARD_DATA[id].color === 'yellow').length;
+  html += `<div class="cost-detail">Défausser: <span>+${discardGain}🪙</span></div>`;
+  
+  info.innerHTML = html;
+  
+  btnBuild.disabled = !canAfford && !isChained;
+  btnDiscard.disabled = false;
+  btnWonder.disabled = !hasUnbuiltWonder;
+  
+  if (G.selectedWonder) {
+    btnWonder.textContent = `🌟 → ${G.players[G.currentPlayer].wonders[G.selectedWonder.idx].name}`;
+  } else {
+    btnWonder.textContent = '🌟 Construire Merveille (sélectionner d\'abord)';
+  }
+}
+
+// ===================================================
+// GAME LOGIC
+// ===================================================
+
+function selectCard(cardId, row, col) {
+  G.selectedCard = (G.selectedCard === cardId) ? null : cardId;
+  renderStructure();
+  renderActionPanel();
+}
+
+function selectWonder(pid, idx) {
+  if (pid !== G.currentPlayer) { notify('Ce n\'est pas votre Merveille !', 'error'); return; }
+  if (G.players[pid].wonders[idx].built) { notify('Cette Merveille est déjà construite.', 'error'); return; }
+  
+  G.selectedWonder = (G.selectedWonder?.idx === idx) ? null : {pid, idx};
+  renderPlayerBoards();
+  renderActionPanel();
+}
+
+function canChain(pid, card) {
+  if (!card.chain_from) return false;
+  const p = G.players[pid];
+  const fromIds = Array.isArray(card.chain_from) ? card.chain_from : [card.chain_from];
+  return fromIds.some(fromId => p.cards.includes(fromId));
+}
+
+function getTotalResources(pid) {
+  const p = G.players[pid];
+  const res = {wood:0, stone:0, clay:0, glass:0, papyrus:0};
+  
+  p.cards.forEach(cardId => {
+    const card = CARD_DATA[cardId];
+    if (card.effect?.produces) {
+      for (const [r,a] of Object.entries(card.effect.produces)) res[r] = (res[r]||0) + a;
+    }
+    if (card.effect?.produces_choice) {
+      // For cost calculation, we handle this specially; here count 0 (player chooses)
+    }
+  });
+  
+  // Wonder production
+  p.wonders.forEach(w => {
+    if (w.built) {
+      w.effects.forEach(e => {
+        if (e.type === 'produce_choice') {
+          // handled separately
+        }
+      });
+    }
+  });
+  
+  return res;
+}
+
+function getChoiceResources(pid) {
+  const p = G.players[pid];
+  const choices = [];
+  
+  p.cards.forEach(cardId => {
+    const card = CARD_DATA[cardId];
+    if (card.effect?.produces_choice) {
+      choices.push(card.effect.produces_choice);
+    }
+  });
+  
+  p.wonders.forEach(w => {
+    if (w.built) {
+      w.effects.forEach(e => {
+        if (e.type === 'produce_choice') choices.push(e.res);
+      });
+    }
+  });
+  
+  return choices;
+}
+
+function computeCardCost(pid, card) {
+  const p = G.players[pid];
+  const opp = G.players[pid === 1 ? 2 : 1];
+  
+  if (canChain(pid, card)) return {total:0, coins:0, tradeCost:0, canAfford:true, chained:true};
+  
+  const baseCoinCost = card.cost.coins || 0;
+  const resNeeded = {...(card.cost.resources || {})};
+  
+  // Available resources
+  const myRes = getTotalResources(pid);
+  const myChoices = getChoiceResources(pid);
+  
+  // Architecture discount
+  const hasArch = p.progressTokens.includes('architecture');
+  
+  // Masonry discount (blue cards)
+  const hasMasonry = p.progressTokens.includes('maconnerie');
+  
+  // Calculate remaining resources needed
+  let tradeCost = 0;
+  const remaining = {};
+  
+  for (const [res, needed] of Object.entries(resNeeded)) {
+    const have = myRes[res] || 0;
+    const diff = needed - have;
+    if (diff > 0) remaining[res] = diff;
+  }
+  
+  // Try to fill remaining with choice cards
+  // Simple greedy approach
+  let choicesCopy = myChoices.map(c => [...c]);
+  for (const [res, needed] of Object.entries(remaining)) {
+    let remaining_needed = needed;
+    for (const choice of choicesCopy) {
+      if (choice.includes(res) && remaining_needed > 0) {
+        const used = choice.indexOf(res);
+        choice.splice(used, 1);
+        remaining_needed--;
+      }
+    }
+    if (remaining_needed > 0) {
+      remaining[res] = remaining_needed;
+    } else {
+      delete remaining[res];
+    }
+  }
+  
+  // Compute trade cost
+  const oppRes = getTotalResources(pid === 1 ? 2 : 1);
+  for (const [res, needed] of Object.entries(remaining)) {
+    const discount = (p.tradeDiscounts || {})[res] ? 1 : (2 + (oppRes[res] || 0));
+    tradeCost += needed * discount;
+  }
+  
+  // Economy: opponent pays us for their trade (handled elsewhere)
+  
+  const total = baseCoinCost + tradeCost;
+  return { total, coins: baseCoinCost, tradeCost, canAfford: p.coins >= total };
+}
+
+function computeWonderCost(pid, wonder) {
+  const p = G.players[pid];
+  const cost = {...wonder.cost};
+  
+  // Architecture discount
+  if (p.progressTokens.includes('architecture')) {
+    let discount = 2;
+    for (const res of Object.keys(cost)) {
+      const reduce = Math.min(discount, cost[res]);
+      cost[res] -= reduce;
+      discount -= reduce;
+      if (discount <= 0) break;
+    }
+  }
+  
+  // Theology: wonder has replay effect
+  
+  const myRes = getTotalResources(pid);
+  const myChoices = getChoiceResources(pid);
+  const oppRes = getTotalResources(pid === 1 ? 2 : 1);
+  
+  let tradeCost = 0;
+  const remaining = {};
+  
+  for (const [res, needed] of Object.entries(cost)) {
+    const have = myRes[res] || 0;
+    const diff = needed - have;
+    if (diff > 0) remaining[res] = diff;
+  }
+  
+  // Fill with choices
+  let choicesCopy = myChoices.map(c => [...c]);
+  for (const [res, needed] of Object.entries(remaining)) {
+    let rem = needed;
+    for (const choice of choicesCopy) {
+      if (choice.includes(res) && rem > 0) {
+        choice.splice(choice.indexOf(res), 1);
+        rem--;
+      }
+    }
+    if (rem > 0) remaining[res] = rem; else delete remaining[res];
+  }
+  
+  for (const [res, needed] of Object.entries(remaining)) {
+    const discount = (p.tradeDiscounts || {})[res] ? 1 : (2 + (oppRes[res] || 0));
+    tradeCost += needed * discount;
+  }
+  
+  return { total: tradeCost, tradeCost, canAfford: p.coins >= tradeCost };
+}
+
+function getTotalShields(pid) {
+  let shields = 0;
+  const p = G.players[pid];
+  p.cards.forEach(id => { const c = CARD_DATA[id]; if(c.effect?.shields) shields += c.effect.shields; });
+  p.wonders.forEach(w => {
+    if (w.built) w.effects.forEach(e => { if(e.type==='shields') shields += e.amount; });
+  });
+  if (p.progressTokens.includes('strategie')) {
+    // Already counted as extra per military card; handled during build
+  }
+  return shields;
+}
+
+function getMilitaryVP(pos) {
+  // Selon les règles : zones délimitées par les jetons sur la piste
+  // Côté J2 (pos négatif) : -1 à -3 → 2PV, -4 à -6 → 5PV, -7 à -9 → 10PV
+  // Côté J1 (pos positif) : 1 à 3 → 2PV, 4 à 6 → 5PV, 7 à 9 → 10PV
+  if (pos <= 0) {
+    if (pos <= -7) return { p2: 10, p1: 0 };
+    if (pos <= -4) return { p2: 5,  p1: 0 };
+    if (pos <= -1) return { p2: 2,  p1: 0 };
+    return { p2: 0, p1: 0 }; // pos === 0
+  } else {
+    if (pos >= 7) return { p2: 0, p1: 10 };
+    if (pos >= 4) return { p2: 0, p1: 5  };
+    return           { p2: 0, p1: 2  };
+  }
+}
+
+function checkMilitaryToken(pos, attackerId) {
+  const defenderId = attackerId === 1 ? 2 : 1;
+  const opp = G.players[defenderId];
+
+  // Les jetons pénalité sont aux positions ±2 et ±5
+  // Quand J1 avance vers +, les jetons se déclenchent à +2 et +5 (J2 perd des pièces)
+  // Quand J2 avance vers -, les jetons se déclenchent à -2 et -5 (J1 perd des pièces)
+  const tok2 = attackerId === 1 ? 2 : -2;
+  const tok5 = attackerId === 1 ? 5 : -5;
+
+  if (pos === tok2 && !G.militaryTokensUsed.includes(`tok_${tok2}`)) {
+    G.militaryTokensUsed.push(`tok_${tok2}`);
+    const lost = Math.min(2, opp.coins);
+    opp.coins -= lost;
+    notify(`⚔ Jeton militaire ! Joueur ${defenderId} perd ${lost} 🪙`, 'military');
+    addLog(`Jeton -2🪙 : J${defenderId} perd ${lost}🪙`);
+  }
+  if (pos === tok5 && !G.militaryTokensUsed.includes(`tok_${tok5}`)) {
+    G.militaryTokensUsed.push(`tok_${tok5}`);
+    const lost = Math.min(5, opp.coins);
+    opp.coins -= lost;
+    notify(`⚔ Jeton militaire MAJEUR ! Joueur ${defenderId} perd ${lost} 🪙`, 'military');
+    addLog(`Jeton -5🪙 : J${defenderId} perd ${lost}🪙`);
+  }
+}
+
+function performBuild() {
+  if (!G.selectedCard) return;
+  const card = CARD_DATA[G.selectedCard];
+  const p = G.players[G.currentPlayer];
+  const opp = G.players[G.currentPlayer === 1 ? 2 : 1];
+  
+  const isChained = canChain(G.currentPlayer, card);
+  const costInfo = computeCardCost(G.currentPlayer, card);
+  
+  if (!isChained && p.coins < costInfo.total) {
+    notify(`Pas assez de pièces ! Besoin de ${costInfo.total}🪙, vous avez ${p.coins}🪙`, 'error');
+    return;
+  }
+  
+  // Pay cost
+  if (!isChained) {
+    p.coins -= costInfo.total;
+    // Economy: if opponent has economy, they get the trade cost
+    if (opp.progressTokens.includes('economie') && costInfo.tradeCost > 0) {
+      opp.coins += costInfo.tradeCost;
+      addLog(`Économie: Joueur ${G.currentPlayer===1?2:1} gagne ${costInfo.tradeCost}🪙`);
+    }
+  } else {
+    // Urbanisme: free chain = +4 coins
+    if (p.progressTokens.includes('urbanisme')) {
+      p.coins += 4;
+      addLog(`Urbanisme: +4🪙 pour chaînage gratuit`);
+    }
+  }
+  
+  // Add card to city
+  p.cards.push(G.selectedCard);
+  
+  // Apply immediate effects
+  applyCardEffect(G.currentPlayer, card, isChained);
+  
+  // Handle special yellow cards that give coins for existing cards
+  if (card.effect?.coins_per) {
+    const cp = card.effect.coins_per;
+    let count = 0;
+    if (cp.color) {
+      count = p.cards.filter(id => CARD_DATA[id].color === cp.color).length;
+    } else if (cp.type === 'wonder') {
+      count = p.wonders.filter(w => w.built).length;
+    }
+    const gained = count * cp.amount;
+    p.coins += gained;
+    if (gained > 0) addLog(`${card.name}: +${gained}🪙`);
+  }
+  
+  addLog(`J${G.currentPlayer} construit ${card.name}${isChained?' (chaîné)':costInfo.total>0?` (-${costInfo.total}🪙)`:''}`);
+  
+  // Remove card from structure
+  removeFromStructure(G.selectedCard);
+  
+  // Check science victory
+  checkScienceVictory();
+  
+  // Age over or next turn
+  if (isAgeOver()) {
+    handleAgeEnd();
+  } else {
+    nextTurn();
+  }
+}
+
+function applyCardEffect(pid, card, isChained) {
+  const p = G.players[pid];
+  const opp = G.players[pid === 1 ? 2 : 1];
+  
+  if (card.effect?.coins_immediate) {
+    p.coins += card.effect.coins_immediate;
+    addLog(`+${card.effect.coins_immediate}🪙 (${card.name})`);
+  }
+  
+  if (card.effect?.shields) {
+    let shields = card.effect.shields;
+    if (p.progressTokens.includes('strategie')) shields++;
+    advanceConflict(pid, shields);
+  }
+  
+  if (card.effect?.science) {
+    addScienceSymbol(pid, card.effect.science);
+  }
+  
+  if (card.effect?.trade_discount) {
+    for (const res of Object.keys(card.effect.trade_discount)) {
+      if (!p.tradeDiscounts) p.tradeDiscounts = {};
+      p.tradeDiscounts[res] = true;
+    }
+  }
+}
+
+function addScienceSymbol(pid, symbol) {
+  const p = G.players[pid];
+  p.scienceSymbols.push(symbol);
+  
+  // Check pairs for progress token
+  const symCount = {};
+  p.scienceSymbols.forEach(s => symCount[s] = (symCount[s]||0)+1);
+  
+  // Check if any symbol appears twice
+  for (const [sym, count] of Object.entries(symCount)) {
+    if (count === 2 && !p._sciPairClaimed?.includes(sym)) {
+      if (!p._sciPairClaimed) p._sciPairClaimed = [];
+      p._sciPairClaimed.push(sym);
+      // Offer progress token
+      offerProgressToken(pid);
+      return;
+    }
+  }
+  
+  // Check 6 different
+  const unique = new Set(p.scienceSymbols.filter(s => s !== 'loi_dup')).size;
+  if (unique >= 6) {
+    setTimeout(() => endGame(`science`, pid), 300);
+  }
+}
+
+function offerProgressToken(pid) {
+  const available = G.progressTokensAvailable.filter(t => !t.taken);
+  if (available.length === 0) return;
+  
+  openModal('Choisir un Jeton Progrès', `
+    <p style="color:#ccc;margin-bottom:8px">Vous avez réuni une paire de symboles scientifiques identiques !<br>Choisissez un jeton Progrès :</p>
+    <div class="token-choice-grid">
+      ${available.map(t => `
+        <div class="token-choice-btn" onclick="claimProgressToken('${t.id}', ${pid})">
+          <span>${t.icon}</span>
+          <div class="token-choice-name">${t.name}</div>
+        </div>
+      `).join('')}
+    </div>
+  `);
+}
+
+function claimProgressToken(tokenId, pid) {
+  const p = G.players[pid];
+  const tok = G.progressTokensAvailable.find(t => t.id === tokenId);
+  if (!tok || tok.taken) return;
+  
+  tok.taken = true;
+  p.progressTokens.push(tokenId);
+  
+  // Apply immediate effects
+  if (tokenId === 'agriculture' || tokenId === 'urbanisme') {
+    p.coins += 6;
+    addLog(`Progrès ${tokenId}: +6🪙`);
+  }
+  if (tokenId === 'loi') {
+    // Law gives 1 science symbol
+    const sciDiv = openChoiceModal('Choisir un symbole scientifique', 
+      SCIENCE_SYMBOLS.slice(0,7).map(s => `<button class="token-choice-btn" onclick="claimLawSymbol('${s}', ${pid})" style="width:55px;height:55px">${SCIENCE_ICONS[s]}<div class="token-choice-name">${s}</div></button>`).join(''),
+      false
+    );
+  }
+  
+  closeModal();
+  addLog(`J${pid} prend le Progrès: ${tok.name}`);
+  renderAll();
+}
+
+function claimLawSymbol(symbol, pid) {
+  addScienceSymbol(pid, symbol);
+  closeModal();
+  addLog(`Loi: symbole ${SCIENCE_ICONS[symbol]} ajouté`);
+  renderAll();
+}
+
+function advanceConflict(pid, shields) {
+  // pid=1 moves pawn toward positive (P2 side), pid=2 moves toward negative
+  const dir = pid === 1 ? 1 : -1;
+  const oldPos = G.conflictPos;
+  
+  for (let i = 0; i < shields; i++) {
+    G.conflictPos += dir;
+    
+    // Check military tokens
+    checkMilitaryToken(G.conflictPos, pid);
+    
+    // Check capital
+    if (G.conflictPos >= 9) {
+      G.conflictPos = 9;
+      setTimeout(() => endGame('military', pid), 300);
+      return;
+    }
+    if (G.conflictPos <= -9) {
+      G.conflictPos = -9;
+      setTimeout(() => endGame('military', pid), 300);
+      return;
+    }
+  }
+  
+  addLog(`Conflit: pion en position ${G.conflictPos}`);
+}
+
+function estimateVP(pid) {
+  const p = G.players[pid];
+  let vp = 0;
+
+  p.cards.forEach(id => { vp += CARD_DATA[id].victory_points || 0; });
+
+  p.wonders.forEach(w => {
+    if (w.built) w.effects.forEach(e => { if(e.type==='vp') vp += e.amount; });
+  });
+
+  const milVP = getMilitaryVP(G.conflictPos);
+  vp += pid === 1 ? milVP.p1 : milVP.p2;
+
+  p.progressTokens.forEach(tok => {
+    if (tok === 'philosophie') vp += 7;
+    if (tok === 'agriculture') vp += 4;
+  });
+  if (p.progressTokens.includes('mathematiques')) {
+    vp += 3 * p.progressTokens.length;
+  }
+
+  vp += Math.floor(p.coins / 3);
+  return vp;
+}
+
+function performDiscard() {
+  if (!G.selectedCard) return;
+  const p = G.players[G.currentPlayer];
+  const card = CARD_DATA[G.selectedCard];
+
+  const yellowCount = p.cards.filter(id => CARD_DATA[id].color === 'yellow').length;
+  const gained = 2 + yellowCount;
+  p.coins += gained;
+
+  G.discardPile.push(G.selectedCard);
+  document.getElementById('discard-count').textContent = G.discardPile.length;
+
+  addLog(`J${G.currentPlayer} défausse ${card.name} → +${gained}🪙`);
+  removeFromStructure(G.selectedCard);
+
+  if (isAgeOver()) handleAgeEnd(); else nextTurn();
+}
+
+function performWonderBuild() {
+  if (!G.selectedCard || !G.selectedWonder) {
+    notify('Sélectionnez d\'abord une Merveille à construire !', 'error');
+    return;
+  }
+  
+  const p = G.players[G.currentPlayer];
+  const wonder = p.wonders[G.selectedWonder.idx];
+  const card = CARD_DATA[G.selectedCard];
+  
+  if (wonder.built) { notify('Cette Merveille est déjà construite.', 'error'); return; }
+  
+  // Check if 7 wonders already built
+  if (G.wondersBuilt >= 7) { notify('7 Merveilles ont déjà été construites !', 'error'); return; }
+  
+  const costInfo = computeWonderCost(G.currentPlayer, wonder);
+  if (p.coins < costInfo.total) {
+    notify(`Pas assez de pièces ! Besoin de ${costInfo.total}🪙`, 'error');
+    return;
+  }
+  
+  // Pay
+  const opp = G.players[G.currentPlayer === 1 ? 2 : 1];
+  p.coins -= costInfo.total;
+  if (opp.progressTokens.includes('economie') && costInfo.tradeCost > 0) {
+    opp.coins += costInfo.tradeCost;
+  }
+  
+  wonder.built = true;
+  G.wondersBuilt++;
+  
+  // Remove card from structure (used as resource)
+  G.discardPile.push(G.selectedCard);
+  removeFromStructure(G.selectedCard);
+  
+  addLog(`J${G.currentPlayer} construit ${wonder.name}${costInfo.total>0?` (-${costInfo.total}🪙)`:''}`);
+  
+  // Apply wonder effects
+  applyWonderEffects(G.currentPlayer, wonder, costInfo);
+  
+  // Check if 7 wonders rule: remove last unbuilt
+  if (G.wondersBuilt === 7) {
+    // Remove 8th unbuilt wonder
+    for (const pid of [1,2]) {
+      G.players[pid].wonders.forEach(w => {
+        if (!w.built) {
+          addLog(`La ${w.name} est retirée du jeu (7 Merveilles construites)`);
+          w.removed = true;
+        }
+      });
+    }
+  }
+  
+  G.selectedWonder = null;
+  
+  // Check if replay
+  let replay = wonder.effects.some(e => e.type === 'replay');
+  if (!replay && p.progressTokens.includes('theologie')) replay = true;
+  
+  if (replay) {
+    notify('✨ Rejouer ! Vous avez un tour supplémentaire.', 'success');
+    G.selectedCard = null;
+    renderAll();
+    return; // Same player plays again
+  }
+  
+  if (isAgeOver()) handleAgeEnd(); else nextTurn();
+}
+
+function applyWonderEffects(pid, wonder, costInfo) {
+  const p = G.players[pid];
+  const opp = G.players[pid === 1 ? 2 : 1];
+  
+  wonder.effects.forEach(e => {
+    switch(e.type) {
+      case 'shields':
+        advanceConflict(pid, e.amount);
+        break;
+      case 'coins':
+        p.coins += e.amount;
+        addLog(`${wonder.name}: +${e.amount}🪙`);
+        break;
+      case 'opponent_coins':
+        const lost = Math.min(Math.abs(e.amount), opp.coins);
+        opp.coins -= lost;
+        addLog(`${wonder.name}: J${pid===1?2:1} perd ${lost}🪙`);
+        break;
+      case 'produce_choice':
+        // Stored in wonder, handled in resource calc
+        break;
+      case 'destroy_card':
+        handleDestroyCard(pid, e.color);
+        break;
+      case 'choose_progress':
+        handleChooseProgress(pid);
+        break;
+      case 'build_discard':
+        handleBuildFromDiscard(pid);
+        break;
+    }
+  });
+}
+
+function handleDestroyCard(pid, color) {
+  const opp = G.players[pid === 1 ? 2 : 1];
+  const destroyable = opp.cards.filter(id => CARD_DATA[id].color === color);
+  
+  if (destroyable.length === 0) {
+    notify(`L'adversaire n'a pas de carte ${color === 'brown' ? 'marron' : 'grise'} à détruire.`);
+    return;
+  }
+  
+  openModal(`Détruire une carte ${color === 'brown' ? 'marron (matière première)' : 'grise (produit manufacturé)'}`, `
+    <p style="color:#ccc;margin-bottom:8px">Choisissez une carte à détruire dans la cité adverse :</p>
+    <div class="destroy-options">
+      ${destroyable.map(id => {
+        const c = CARD_DATA[id];
+        return `<button class="destroy-card-btn mini-${c.color}" onclick="confirmDestroy('${id}', ${pid})">${c.name}</button>`;
+      }).join('')}
+    </div>
+    <div class="modal-actions"><button class="modal-btn modal-btn-cancel" onclick="closeModal()">Annuler</button></div>
+  `);
+}
+
+function confirmDestroy(cardId, pid) {
+  const opp = G.players[pid === 1 ? 2 : 1];
+  const idx = opp.cards.indexOf(cardId);
+  if (idx > -1) {
+    opp.cards.splice(idx, 1);
+    G.discardPile.push(cardId);
+    addLog(`J${pid} détruit ${CARD_DATA[cardId].name} de J${pid===1?2:1}`);
+  }
+  closeModal();
+  renderAll();
+}
+
+function handleChooseProgress(pid) {
+  // Draw 3 from removed tokens
+  const pool = G.removedProgressTokens.filter(t => !t.taken);
+  if (pool.length === 0) {
+    notify('Pas de jetons Progrès disponibles.');
+    return;
+  }
+  shuffle(pool);
+  const offered = pool.slice(0, Math.min(3, pool.length));
+  
+  openModal('Grande Bibliothèque — Choisir un Jeton Progrès', `
+    <p style="color:#ccc;margin-bottom:8px">Choisissez 1 jeton parmi :</p>
+    <div class="token-choice-grid">
+      ${offered.map(t => `
+        <div class="token-choice-btn" onclick="claimSpecialProgress('${t.id}', ${pid}, [${offered.map(x=>`'${x.id}'`).join(',')}])">
+          <span>${t.icon}</span>
+          <div class="token-choice-name">${t.name}</div>
+        </div>
+      `).join('')}
+    </div>
+  `);
+}
+
+function claimSpecialProgress(tokenId, pid, offeredIds) {
+  const p = G.players[pid];
+  const tok = G.removedProgressTokens.find(t => t.id === tokenId);
+  if (!tok) return;
+  
+  tok.taken = true;
+  p.progressTokens.push(tokenId);
+  
+  if (tokenId === 'agriculture' || tokenId === 'urbanisme') {
+    p.coins += 6;
+  }
+  
+  addLog(`J${pid} prend le Progrès (Bibliothèque): ${tok.name}`);
+  closeModal();
+  renderAll();
+}
+
+function handleBuildFromDiscard(pid) {
+  const available = G.discardPile.filter(id => !!CARD_DATA[id]);
+  if (available.length === 0) {
+    notify('La défausse est vide.', 'error');
+    return;
+  }
+  
+  openModal('Mausolée — Construire depuis la défausse', `
+    <p style="color:#ccc;margin-bottom:8px">Choisissez une carte à construire gratuitement :</p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;max-height:300px;overflow-y:auto;padding:4px;">
+      ${available.map(id => {
+        const c = CARD_DATA[id];
+        return `<button class="built-card-mini mini-${c.color}" style="width:80px;height:40px;font-size:0.6rem;cursor:pointer;" onclick="buildFromDiscard('${id}', ${pid})">${c.name}</button>`;
+      }).join('')}
+    </div>
+    <div class="modal-actions"><button class="modal-btn modal-btn-cancel" onclick="closeModal()">Annuler</button></div>
+  `);
+}
+
+function buildFromDiscard(cardId, pid) {
+  const p = G.players[pid];
+  const card = CARD_DATA[cardId];
+  
+  p.cards.push(cardId);
+  G.discardPile = G.discardPile.filter(id => id !== cardId);
+  document.getElementById('discard-count').textContent = G.discardPile.length;
+  
+  applyCardEffect(pid, card, true);
+  addLog(`J${pid} construit ${card.name} depuis la défausse (gratuit)`);
+  closeModal();
+  
+  checkScienceVictory();
+  renderAll();
+}
+
+function checkScienceVictory() {
+  for (const pid of [1, 2]) {
+    const p = G.players[pid];
+    // Count unique symbols
+    const symbolSet = new Set(p.scienceSymbols);
+    // Loi gives 1 symbol of choice (already added to scienceSymbols)
+    if (symbolSet.size >= 6) {
+      setTimeout(() => endGame('science', pid), 200);
+    }
+  }
+}
+
+function removeFromStructure(cardId) {
+  for (let r = 0; r < G.structureLayout.length; r++) {
+    const slots = G.structureLayout[r].slots;
+    for (let c = 0; c < slots.length; c++) {
+      if (slots[c].cardId === cardId) {
+        slots[c].cardId = null;
+        slots[c].removed = true;
+        G.selectedCard = null;
+        return;
+      }
+    }
+  }
+}
+
+function isAgeOver() {
+  return G.structureLayout.every(row =>
+    row.slots.every(slot => slot.phantom || !slot.cardId || slot.removed)
+  );
+}
+
+function nextTurn() {
+  G.currentPlayer = G.currentPlayer === 1 ? 2 : 1;
+  G.selectedCard = null;
+  G.selectedWonder = null;
+  
+  if (isAgeOver()) {
+    handleAgeEnd();
+    return;
+  }
+  
+  renderAll();
+}
+
+function handleAgeEnd() {
+  if (G.age < 3) {
+    const nextAge = G.age + 1;
+    
+    // Who starts next age: the player who is BEHIND militarily
+    let nextStarter;
+    if (G.conflictPos > 0) nextStarter = 2; // P1 is winning, P2 starts
+    else if (G.conflictPos < 0) nextStarter = 1;
+    else nextStarter = G.currentPlayer === 1 ? 2 : 1; // Last player to play, other starts
+    
+    setupAge(nextAge);
+    G.currentPlayer = nextStarter;
+    
+    const ageNames = ['', 'I', 'II', 'III'];
+    showPhaseOverlay(`Âge ${ageNames[nextAge]}`, `Joueur ${nextStarter} commence l'Âge ${ageNames[nextAge]}`);
+  } else {
+    // Game over
+    setTimeout(() => endGame('civil'), 300);
+  }
+}
+
+function endGame(reason, winnerId) {
+  if (reason === 'military') {
+    showScorePanel(`Victoire Militaire ! Joueur ${winnerId} a envahi la capitale adverse.`, winnerId);
+  } else if (reason === 'science') {
+    showScorePanel(`Victoire Scientifique ! Joueur ${winnerId} a réuni 6 symboles différents.`, winnerId);
+  } else {
+    // Civil: count VPs
+    const vp1 = computeFinalVP(1);
+    const vp2 = computeFinalVP(2);
+    let winner;
+    if (vp1 > vp2) winner = 1;
+    else if (vp2 > vp1) winner = 2;
+    else {
+      // Tiebreak: blue cards VP
+      const blueVP1 = G.players[1].cards.filter(id=>CARD_DATA[id].color==='blue').reduce((s,id)=>s+(CARD_DATA[id].victory_points||0),0);
+      const blueVP2 = G.players[2].cards.filter(id=>CARD_DATA[id].color==='blue').reduce((s,id)=>s+(CARD_DATA[id].victory_points||0),0);
+      winner = blueVP1 >= blueVP2 ? 1 : 2;
+    }
+    showScorePanel('Victoire Civile — Fin de l\'Âge III', winner, vp1, vp2);
+  }
+}
+
+function computeFinalVP(pid) {
+  const p = G.players[pid];
+  let vp = 0;
+  
+  // Cards
+  p.cards.forEach(id => vp += CARD_DATA[id].victory_points || 0);
+  
+  // Wonders
+  p.wonders.forEach(w => {
+    if (w.built) w.effects.forEach(e => { if(e.type==='vp') vp += e.amount; });
+  });
+  
+  // Military
+  const milVP = getMilitaryVP(G.conflictPos);
+  vp += pid === 1 ? milVP.p1 : milVP.p2;
+  
+  // Progress tokens
+  p.progressTokens.forEach(tok => {
+    if (tok === 'philosophie') vp += 7;
+    if (tok === 'agriculture') vp += 4;
+  });
+  if (p.progressTokens.includes('mathematiques')) {
+    vp += 3 * p.progressTokens.length;
+  }
+  
+  // Guilds
+  p.cards.filter(id => CARD_DATA[id].color === 'purple').forEach(id => {
+    const card = CARD_DATA[id];
+    if (card.effect?.guild) {
+      const type = card.effect.guild;
+      let bestCount = 0;
+      for (const pid2 of [1,2]) {
+        let count = 0;
+        const p2 = G.players[pid2];
+        if (type === 'yellow') count = p2.cards.filter(id2=>CARD_DATA[id2].color==='yellow').length;
+        else if (type === 'brown_gray') count = p2.cards.filter(id2=>['brown','gray'].includes(CARD_DATA[id2].color)).length;
+        else if (type === 'blue') count = p2.cards.filter(id2=>CARD_DATA[id2].color==='blue').length;
+        else if (type === 'green') count = p2.cards.filter(id2=>CARD_DATA[id2].color==='green').length;
+        else if (type === 'red') count = p2.cards.filter(id2=>CARD_DATA[id2].color==='red').length;
+        else if (type === 'wonder') count = p2.wonders.filter(w=>w.built).length;
+        else if (type === 'coins') count = Math.floor(p2.coins/3);
+        if (count > bestCount) bestCount = count;
+      }
+      vp += bestCount;
+    }
+  });
+  
+  // Coins
+  vp += Math.floor(p.coins / 3);
+  
+  return vp;
+}
+
+// ===================================================
+// UI HELPERS
+// ===================================================
+
+function showCardModal(cardId) {
+  const card = CARD_DATA[cardId];
+  const isBuilt1 = G.players[1].cards.includes(cardId);
+  const isBuilt2 = G.players[2].cards.includes(cardId);
+  
+  let desc = '';
+  const e = card.effect;
+  if (e?.produces) desc += `<strong>Production:</strong> ${Object.entries(e.produces).map(([r,a])=>`${a} ${RES_ICONS[r]} ${RES_NAMES[r]}`).join(', ')}<br>`;
+  if (e?.produces_choice) desc += `<strong>Production (au choix):</strong> ${e.produces_choice.map(r=>`${RES_ICONS[r]} ${RES_NAMES[r]}`).join(' / ')}<br>`;
+  if (e?.shields) desc += `<strong>Militaire:</strong> +${e.shields} 🛡 bouclier(s)<br>`;
+  if (e?.science) desc += `<strong>Scientifique:</strong> Symbole ${SCIENCE_ICONS[e.science]} (${e.science})<br>`;
+  if (e?.coins_immediate) desc += `<strong>Effet immédiat:</strong> +${e.coins_immediate} 🪙<br>`;
+  if (e?.trade_discount) desc += `<strong>Commerce:</strong> ${Object.keys(e.trade_discount).map(r=>`${RES_ICONS[r]} à 1🪙`).join(', ')}<br>`;
+  if (e?.coins_per) {
+    const cp = e.coins_per;
+    const colorLabel = {brown:'marrons',gray:'grises',red:'rouges',yellow:'jaunes'};
+    desc += `<strong>Revenu:</strong> +${cp.amount}🪙 par carte ${colorLabel[cp.color]||cp.type} ${cp.type==='wonder'?'Merveille construite':''} (à la construction)<br>`;
+  }
+  if (e?.guild) {
+    const g = e.guild;
+    const gl = {yellow:'jaune',brown_gray:'marron+grise',blue:'bleue',green:'verte',red:'rouge',wonder:'Merveille',coins:'tranche de 3🪙'};
+    desc += `<strong>Guilde:</strong> +1🪙 et +1PV par carte ${gl[g]||g} dans la cité la plus riche<br>`;
+  }
+  if (card.victory_points > 0) desc += `<strong>Points de Victoire:</strong> ${card.victory_points} ⭐<br>`;
+  
+  // Cost
+  const costStr = buildCostString(card.cost);
+  
+  // Chain info
+  let chainInfo = '';
+  if (card.chain_from) {
+    const froms = Array.isArray(card.chain_from) ? card.chain_from : [card.chain_from];
+    chainInfo += `<br><strong>⛓ Chaînable depuis:</strong> ${froms.map(id=>CARD_DATA[id]?.name||id).join(' ou ')}`;
+  }
+  if (card.chain_to) {
+    chainInfo += `<br><strong>⛓ Permet de chaîner:</strong> ${CARD_DATA[card.chain_to]?.name||card.chain_to}`;
+  }
+  
+  const typeColors = {brown:'#8B4513',gray:'#708090',red:'#C0392B',green:'#27AE60',blue:'#2980B9',yellow:'#F39C12',purple:'#8E44AD'};
+  
+  openModal(card.name, `
+    <div class="modal-section">
+      <div style="display:inline-block;background:${typeColors[card.color]};color:white;padding:2px 10px;border-radius:10px;font-size:0.7rem;margin-bottom:8px;">${typeLabel(card.color)}</div>
+      <span style="font-size:0.75rem;color:#888;margin-left:8px;">Âge ${card.age}</span>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Coût</div>
+      <div>${costStr || '<em style="color:#888">Gratuit</em>'}</div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Effet</div>
+      <div>${desc || '<em style="color:#888">Aucun effet direct</em>'}</div>
+    </div>
+    ${chainInfo ? `<div class="modal-section">${chainInfo}</div>` : ''}
+    ${isBuilt1 || isBuilt2 ? `<div style="color:#a8e6cf;font-size:0.75rem;">✓ Dans la cité de Joueur ${isBuilt1?1:2}</div>` : ''}
+  `);
+}
+
+function showWonderModal(wonder) {
+  const costStr = Object.entries(wonder.cost).map(([r,a])=>`${a}×${RES_ICONS[r]} ${RES_NAMES[r]}`).join(', ');
+  
+  openModal(wonder.name, `
+    <div class="modal-section">
+      <div class="modal-label">Coût de construction</div>
+      <div style="font-size:0.85rem">${costStr}</div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Effets</div>
+      <div style="font-size:0.85rem">${wonder.desc}</div>
+    </div>
+    <div class="modal-section" style="font-size:0.75rem;color:#888;">
+      Rappel: Vous utilisez une carte accessible pour construire cette Merveille (la carte elle-même n'a pas d'effet).
+    </div>
+  `);
+}
+
+function showProgressModal(tok) {
+  openModal(`Progrès: ${tok.name}`, `
+    <div style="text-align:center;font-size:2rem;margin:8px 0">${tok.icon}</div>
+    <p style="font-size:0.85rem;line-height:1.6;color:var(--parchment)">${tok.effect}</p>
+  `);
+}
+
+function buildCostString(cost) {
+  const parts = [];
+  if (cost.coins > 0) parts.push(`${cost.coins}🪙`);
+  if (cost.resources) {
+    for (const [r,a] of Object.entries(cost.resources)) {
+      parts.push(`${a}×${RES_ICONS[r]} ${RES_NAMES[r]}`);
+    }
+  }
+  return parts.join(' + ');
+}
+
+function typeLabel(color) {
+  const labels = {
+    brown:'Matière Première', gray:'Produit Manufacturé',
+    red:'Militaire', green:'Scientifique', blue:'Civil',
+    yellow:'Commercial', purple:'Guilde'
+  };
+  return labels[color] || color;
+}
+
+function showScorePanel(msg, winner, vp1, vp2) {
+  const panel = document.getElementById('score-panel');
+  const content = document.getElementById('score-content');
+  
+  let html = `<p style="color:#aaa;margin-bottom:12px">${msg}</p>`;
+  
+  if (vp1 !== undefined) {
+    html += `
+      <div class="score-row"><span class="score-label">Joueur 1 — Score total</span><span class="score-val">${vp1} ⭐</span></div>
+      <div class="score-row"><span class="score-label">Joueur 2 — Score total</span><span class="score-val">${vp2} ⭐</span></div>
+    `;
+    
+    // Detail breakdown
+    for (const pid of [1,2]) {
+      const p = G.players[pid];
+      const cardVP = p.cards.reduce((s,id)=>s+(CARD_DATA[id].victory_points||0),0);
+      const wonderVP = p.wonders.filter(w=>w.built).reduce((s,w)=>s+w.effects.filter(e=>e.type==='vp').reduce((s2,e)=>s2+e.amount,0),0);
+      const milVP = getMilitaryVP(G.conflictPos);
+      const coinVP = Math.floor(p.coins/3);
+      html += `<div class="score-row"><span class="score-label" style="font-size:0.7rem">  J${pid}: Cartes ${cardVP} + Merveilles ${wonderVP} + Militaire ${pid===1?milVP.p1:milVP.p2} + Pièces ${coinVP}</span></div>`;
+    }
+  }
+  
+  html += `<div class="score-winner">🏆 VICTOIRE — Joueur ${winner} !</div>`;
+  content.innerHTML = html;
+  panel.classList.add('active');
+}
+
+function showPhaseOverlay(title, subtitle, auto = false) {
+  const overlay = document.getElementById('phase-overlay');
+  document.getElementById('phase-title').textContent = title;
+  document.getElementById('phase-subtitle').textContent = subtitle;
+  overlay.classList.add('active');
+  if (auto) setTimeout(dismissPhaseOverlay, 2000);
+}
+
+function dismissPhaseOverlay() {
+  document.getElementById('phase-overlay').classList.remove('active');
+  renderAll();
+}
+
+function showDiscard() {
+  if (G.discardPile.length === 0) { notify('La défausse est vide.'); return; }
+  openModal(`Défausse (${G.discardPile.length} cartes)`, `
+    <div style="display:flex;flex-wrap:wrap;gap:5px;max-height:300px;overflow-y:auto;padding:4px;">
+      ${G.discardPile.map(id => {
+        const c = CARD_DATA[id];
+        return `<div class="built-card-mini mini-${c.color}" style="width:76px;height:36px;font-size:0.6rem;" onclick="showCardModal('${id}')">${c.name}</div>`;
+      }).join('')}
+    </div>
+  `);
+}
+
+function openModal(title, body) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function openChoiceModal(title, body, closeable = true) {
+  openModal(title, body);
+  document.getElementById('modal-close').style.display = closeable ? '' : 'none';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+  document.getElementById('modal-close').style.display = '';
+}
+
+function closeModalIfOutside(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+function notify(msg, type = '') {
+  const el = document.getElementById('notification');
+  el.textContent = msg;
+  el.className = type ? `show ${type}` : 'show';
+  setTimeout(() => el.className = '', 3500);
+}
+
+function addLog(msg) {
+  G.log.unshift(msg);
+  if (G.log.length > 20) G.log.pop();
+  
+  const logEl = document.getElementById('game-log');
+  logEl.innerHTML = G.log.slice(0,6).map(l => `<div class="log-entry">${l}</div>`).join('');
+}
+
+function switchTab(pid, tab) {
+  const tabs = document.querySelectorAll(`#board-${pid} .ptab`);
+  const contents = document.querySelectorAll(`#board-${pid} .ptab-content`);
+  
+  tabs.forEach(t => t.classList.remove('active'));
+  contents.forEach(c => c.classList.remove('active'));
+  
+  const tabEl = document.querySelector(`#board-${pid} .ptab-content#${pid}-${tab}`);
+  if (tabEl) tabEl.classList.add('active');
+  
+  // Find and activate the clicked tab
+  tabs.forEach(t => {
+    if (t.getAttribute('onclick')?.includes(tab)) t.classList.add('active');
+  });
+}
+
+function newGame() {
+  document.getElementById('score-panel').classList.remove('active');
+  initGame();
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ===================================================
+// START
+// ===================================================
+window.addEventListener('load', () => {
+  initGame();
+  
+  // Fix tab switching
+  document.querySelectorAll('.ptab').forEach(t => {
+    const pid = t.closest('.player-board')?.classList.contains('player1') ? 'p1' : 'p2';
+    const tabName = t.textContent.toLowerCase().replace('é','e').replace('ê','e').trim();
+    if (tabName === 'ressources') t.setAttribute('onclick', `switchTab('${pid}','resources')`);
+    else if (tabName === 'cité') t.setAttribute('onclick', `switchTab('${pid}','built')`);
+    else if (tabName === 'progrès') t.setAttribute('onclick', `switchTab('${pid}','progress')`);
+  });
+});
+</script>
+</body>
+</html>
