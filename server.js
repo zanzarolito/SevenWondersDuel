@@ -105,10 +105,11 @@ io.on('connection', (socket) => {
       return;
     }
     socket.join(roomId);
-    // Mettre à jour le socket ID du joueur
+    // Mettre à jour le socket ID du joueur et marquer comme socket game.html
     const player = room.players.find(p => p.playerNumber === playerNumber);
     if (player) {
       player.id = socket.id;
+      player.inGameSocket = true;
     }
     console.log(`Joueur ${playerNumber} a rejoint la room ${roomId} depuis game.html (socket: ${socket.id})`);
   });
@@ -130,27 +131,36 @@ io.on('connection', (socket) => {
   // Déconnexion
   socket.on('disconnect', () => {
     console.log('Joueur déconnecté:', socket.id);
-    
+
     // Trouver et nettoyer la room
     for (const [roomId, room] of rooms.entries()) {
       if (!room || !room.players) continue;
-      
+
       const playerIndex = room.players.findIndex(p => p.id === socket.id);
       if (playerIndex !== -1) {
         const playerName = room.players[playerIndex].name;
-        
-        // Notifier les autres joueurs
-        socket.to(roomId).emit('playerDisconnected', {
-          playerName: playerName
-        });
-        
-        // Supprimer la room si elle est vide ou en attente
-        if (room.status === 'waiting' || room.players.length <= 1) {
-          rooms.delete(roomId);
-          console.log(`Room ${roomId} supprimée`);
+        const inGameSocket = room.players[playerIndex].inGameSocket;
+
+        if (room.status === 'playing') {
+          // Partie en cours : ne jamais supprimer la room.
+          // Les deux joueurs naviguent de index.html vers game.html,
+          // ce qui provoque deux déconnexions successives. La room doit
+          // survivre pour que rejoinRoom puisse fonctionner depuis game.html.
+          room.players[playerIndex].id = null;
+
+          if (inGameSocket) {
+            // Vrai déconnexion depuis game.html → prévenir l'adversaire
+            socket.to(roomId).emit('playerDisconnected', { playerName });
+            console.log(`Joueur ${playerName} déconnecté de la partie ${roomId}`);
+          } else {
+            // Transition index.html → game.html, déconnexion temporaire
+            console.log(`Joueur ${playerName} navigue vers game.html (room ${roomId})`);
+          }
         } else {
-          // Retirer le joueur de la room
-          room.players.splice(playerIndex, 1);
+          // Lobby (status='waiting') : supprimer la room
+          socket.to(roomId).emit('playerDisconnected', { playerName });
+          rooms.delete(roomId);
+          console.log(`Room ${roomId} supprimée (lobby)`);
         }
         break;
       }
