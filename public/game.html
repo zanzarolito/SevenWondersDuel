@@ -1796,7 +1796,7 @@ function draftPickWonder(offerIdx) {
 
   const seq = d.sequences[d.group];
   const [currentPid] = seq[d.stepIdx];
-  
+
   // Vérifier que c'est bien le tour du joueur local (en multijoueur)
   if (typeof MP !== 'undefined' && MP.playerNumber && currentPid !== MP.playerNumber) {
     notify("Ce n'est pas votre tour de choisir!", 'error');
@@ -1807,16 +1807,8 @@ function draftPickWonder(offerIdx) {
   w._taken = true;
   G.players[currentPid].wonders.push({...w, built: false});
   addLog(`J${currentPid} choisit ${w.name}`);
-  
-  // Envoyer l'action en multijoueur
-  if (typeof MP !== 'undefined' && MP.isConnected) {
-    MP.sendAction('wonderPicked', { 
-      offerIdx, 
-      playerNumber: currentPid 
-    });
-    MP.sendGameState();
-  }
 
+  // Avancer l'état du draft
   d.stepPicks++;
   const picksInStep = seq[d.stepIdx][1];
 
@@ -1831,6 +1823,8 @@ function draftPickWonder(offerIdx) {
     d.group++;
     if (d.group >= 2) {
       // All 8 wonders assigned — start the game
+      // finishDraft() appelle setupAge(1) qui mélange les cartes :
+      // il faut envoyer l'état APRÈS pour que l'adversaire ait la même structure
       finishDraft();
     } else {
       // Start second group
@@ -1843,6 +1837,11 @@ function draftPickWonder(offerIdx) {
     }
   } else {
     showDraftOverlay();
+  }
+
+  // Synchroniser en multijoueur APRÈS toutes les mises à jour d'état
+  if (typeof MP !== 'undefined' && MP.isConnected) {
+    MP.sendGameState();
   }
 }
 
@@ -2912,26 +2911,31 @@ function claimProgressToken(tokenId, pid) {
   const p = G.players[pid];
   const tok = G.progressTokensAvailable.find(t => t.id === tokenId);
   if (!tok || tok.taken) return;
-  
+
   tok.taken = true;
   p.progressTokens.push(tokenId);
-  
+
   // Apply immediate effects
   if (tokenId === 'agriculture' || tokenId === 'urbanisme') {
     p.coins += 6;
     addLog(`Progrès ${tokenId}: +6🪙`);
   }
   if (tokenId === 'loi') {
-    // Law gives 1 science symbol
-    const sciDiv = openChoiceModal('Choisir un symbole scientifique', 
+    // Law gives 1 science symbol — la modale se ferme après choix du symbole
+    openChoiceModal('Choisir un symbole scientifique',
       SCIENCE_SYMBOLS.slice(0,7).map(s => `<button class="token-choice-btn" onclick="claimLawSymbol('${s}', ${pid})" style="width:55px;height:55px">${SCIENCE_ICONS[s]}<div class="token-choice-name">${s}</div></button>`).join(''),
       false
     );
+    addLog(`J${pid} prend le Progrès: ${tok.name}`);
+    renderAll();
+    // La synchro sera faite dans claimLawSymbol après le choix du symbole
+    return;
   }
-  
+
   closeModal();
   addLog(`J${pid} prend le Progrès: ${tok.name}`);
   renderAll();
+  if (typeof MP !== 'undefined' && MP.isConnected) MP.sendGameState();
 }
 
 function claimLawSymbol(symbol, pid) {
@@ -2939,6 +2943,7 @@ function claimLawSymbol(symbol, pid) {
   closeModal();
   addLog(`Loi: symbole ${SCIENCE_ICONS[symbol]} ajouté`);
   renderAll();
+  if (typeof MP !== 'undefined' && MP.isConnected) MP.sendGameState();
 }
 
 function advanceConflict(pid, shields) {
@@ -3204,6 +3209,7 @@ function confirmDestroy(cardId, pid) {
   }
   closeModal();
   renderAll();
+  if (typeof MP !== 'undefined' && MP.isConnected) MP.sendGameState();
 }
 
 function handleChooseProgress(pid) {
@@ -3233,17 +3239,18 @@ function claimSpecialProgress(tokenId, pid, offeredIds) {
   const p = G.players[pid];
   const tok = G.removedProgressTokens.find(t => t.id === tokenId);
   if (!tok) return;
-  
+
   tok.taken = true;
   p.progressTokens.push(tokenId);
-  
+
   if (tokenId === 'agriculture' || tokenId === 'urbanisme') {
     p.coins += 6;
   }
-  
+
   addLog(`J${pid} prend le Progrès (Bibliothèque): ${tok.name}`);
   closeModal();
   renderAll();
+  if (typeof MP !== 'undefined' && MP.isConnected) MP.sendGameState();
 }
 
 function handleBuildFromDiscard(pid) {
@@ -3268,17 +3275,18 @@ function handleBuildFromDiscard(pid) {
 function buildFromDiscard(cardId, pid) {
   const p = G.players[pid];
   const card = CARD_DATA[cardId];
-  
+
   p.cards.push(cardId);
   G.discardPile = G.discardPile.filter(id => id !== cardId);
   document.getElementById('discard-count').textContent = G.discardPile.length;
-  
+
   applyCardEffect(pid, card, true);
   addLog(`J${pid} construit ${card.name} depuis la défausse (gratuit)`);
   closeModal();
-  
+
   checkScienceVictory();
   renderAll();
+  if (typeof MP !== 'undefined' && MP.isConnected) MP.sendGameState();
 }
 
 function checkScienceVictory() {

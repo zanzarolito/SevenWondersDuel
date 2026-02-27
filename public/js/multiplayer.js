@@ -26,6 +26,14 @@ class MultiplayerManager {
     this.socket.on('connect', () => {
       console.log('Connecte au serveur, socket ID:', this.socket.id);
       this.isConnected = true;
+      // Re-rejoindre la room après reconnexion (nouvelle page après lobby)
+      if (this.roomId && this.playerNumber) {
+        this.socket.emit('rejoinRoom', {
+          roomId: this.roomId,
+          playerNumber: this.playerNumber
+        });
+        console.log('rejoinRoom emis pour room', this.roomId, 'joueur', this.playerNumber);
+      }
     });
 
     this.socket.on('disconnect', () => {
@@ -57,23 +65,25 @@ class MultiplayerManager {
         }
       }, 1000);
     });
-    
+
     this.socket.on('error', (error) => {
       console.error('Erreur Socket.IO:', error);
     });
   }
 
   syncGameState(gameState) {
-    if (typeof G === 'undefined' || typeof renderAll === 'undefined') {
-      console.warn('G ou renderAll non defini');
+    if (typeof G === 'undefined') {
+      console.warn('G non defini');
       return;
     }
-    
+
+    const prevAge = G.age;
+
     console.log('Synchronisation de l\'etat:', {
       avant: { currentPlayer: G.currentPlayer, age: G.age },
       apres: { currentPlayer: gameState.currentPlayer, age: gameState.age }
     });
-    
+
     // Remplacer complètement l'état (pas juste assign)
     for (const key in G) {
       delete G[key];
@@ -81,14 +91,47 @@ class MultiplayerManager {
     for (const key in gameState) {
       G[key] = gameState[key];
     }
-    
-    console.log('État synchronisé, currentPlayer:', G.currentPlayer);
-    renderAll();
+
+    console.log('État synchronisé, age:', G.age, 'currentPlayer:', G.currentPlayer);
+
+    if (G.age === 0) {
+      // Phase de sélection des merveilles : rafraîchir l'overlay de draft
+      if (typeof showDraftOverlay !== 'undefined') {
+        showDraftOverlay();
+      }
+    } else {
+      // Partie en cours : masquer l'overlay de draft si encore visible
+      const draftOverlay = document.getElementById('draft-overlay');
+      if (draftOverlay) draftOverlay.classList.remove('active');
+
+      // Transition draft → jeu : montrer l'overlay de phase
+      if (prevAge === 0 && G.age >= 1) {
+        const ageNames = ['', 'I', 'II', 'III'];
+        if (typeof showPhaseOverlay !== 'undefined') {
+          showPhaseOverlay(
+            'Âge ' + ageNames[G.age],
+            'Joueur ' + G.currentPlayer + ' commence — Bonne chance !',
+            true
+          );
+        }
+      }
+
+      if (typeof renderAll !== 'undefined') {
+        renderAll();
+      }
+
+      // Notification de changement de tour
+      if (G.currentPlayer === this.playerNumber) {
+        if (typeof notify !== 'undefined') notify('À votre tour !', 'success');
+      } else {
+        if (typeof notify !== 'undefined') notify('Tour de l\'adversaire...', 'error');
+      }
+    }
   }
 
   sendGameState() {
     if (!this.isConnected || !this.roomId) return;
-    
+
     this.socket.emit('gameStateUpdate', {
       roomId: this.roomId,
       gameState: G
@@ -97,7 +140,7 @@ class MultiplayerManager {
 
   sendAction(action, data) {
     if (!this.isConnected || !this.roomId) return;
-    
+
     this.socket.emit('playerAction', {
       roomId: this.roomId,
       action,
@@ -106,69 +149,9 @@ class MultiplayerManager {
   }
 
   handleOpponentAction(action, data) {
-    switch (action) {
-      case 'cardSelected':
-        break;
-      case 'turnComplete':
-        if (typeof renderAll !== 'undefined') {
-          renderAll();
-        }
-        break;
-      case 'cardBuilt':
-      case 'cardDiscarded':
-      case 'wonderBuilt':
-        // Ces actions sont déjà synchronisées via gameStateSync
-        // On rafraîchit juste l'affichage
-        console.log('Action recue:', action, 'par J' + data.playerNumber);
-        if (typeof renderAll !== 'undefined') {
-          renderAll();
-        }
-        break;
-      case 'wonderPicked':
-        if (data.offerIdx !== undefined && typeof G !== 'undefined') {
-          const d = G.draft;
-          const w = d.offered[data.offerIdx];
-          if (w && !w._taken) {
-            w._taken = true;
-            G.players[data.playerNumber].wonders.push({...w, built: false});
-            if (typeof addLog !== 'undefined') {
-              addLog('J' + data.playerNumber + ' choisit ' + w.name);
-            }
-            
-            d.stepPicks++;
-            const seq = d.sequences[d.group];
-            const picksInStep = seq[d.stepIdx][1];
-            
-            if (d.stepPicks >= picksInStep) {
-              d.stepIdx++;
-              d.stepPicks = 0;
-            }
-            
-            if (d.stepIdx >= seq.length) {
-              d.group++;
-              if (d.group >= 2) {
-                if (typeof finishDraft !== 'undefined') {
-                  finishDraft();
-                }
-              } else {
-                const groupStart = d.group * 4;
-                d.offered = d.pool.slice(groupStart, groupStart + 4);
-                d.offered.forEach(w => w._taken = false);
-                d.stepIdx = 0;
-                d.stepPicks = 0;
-                if (typeof showDraftOverlay !== 'undefined') {
-                  showDraftOverlay();
-                }
-              }
-            } else {
-              if (typeof showDraftOverlay !== 'undefined') {
-                showDraftOverlay();
-              }
-            }
-          }
-        }
-        break;
-    }
+    // Toutes les mises à jour d'état passent par gameStateSync.
+    // Ce handler ne fait qu'un log pour le débogage.
+    console.log('Action adversaire reçue:', action, data ? ('J' + data.playerNumber) : '');
   }
 
   isMyTurn() {
