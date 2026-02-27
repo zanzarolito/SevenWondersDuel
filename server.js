@@ -97,6 +97,22 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Re-rejoindre une room après navigation vers game.html (nouveau socket)
+  socket.on('rejoinRoom', ({ roomId, playerNumber }) => {
+    const room = rooms.get(roomId);
+    if (!room) {
+      console.warn(`rejoinRoom: room ${roomId} introuvable pour joueur ${playerNumber}`);
+      return;
+    }
+    socket.join(roomId);
+    // Mettre à jour le socket ID du joueur
+    const player = room.players.find(p => p.playerNumber === playerNumber);
+    if (player) {
+      player.id = socket.id;
+    }
+    console.log(`Joueur ${playerNumber} a rejoint la room ${roomId} depuis game.html (socket: ${socket.id})`);
+  });
+
   // Synchroniser l'état du jeu
   socket.on('gameStateUpdate', ({ roomId, gameState }) => {
     const room = rooms.get(roomId);
