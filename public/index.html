@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7 Wonders Duel - Lobby</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a84c;
+  --gold-light: #f0d080;
+  --gold-dark: #8b6914;
+  --parchment: #f5e6c8;
+  --stone: #2c2416;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: #1a1208;
+  background-image: radial-gradient(ellipse at 50% 50%, rgba(139,100,20,0.15) 0%, transparent 60%);
+  font-family: 'Lato', sans-serif;
+  color: var(--parchment);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#lobby-container {
+  background: linear-gradient(135deg, #1a1408 0%, #2a2018 100%);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+
+h1 {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 2rem;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 30px;
+  text-shadow: 0 0 20px rgba(201,168,76,0.5);
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  color: var(--gold-light);
+  margin-bottom: 8px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--gold-dark);
+  border-radius: 6px;
+  color: var(--parchment);
+  font-size: 1rem;
+  font-family: 'Lato', sans-serif;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+  border: none;
+  border-radius: 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: #1a1408;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s;
+  margin-bottom: 10px;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(201,168,76,0.4);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #4a3c2a, #6a5c4a);
+  color: var(--parchment);
+}
+
+.divider {
+  text-align: center;
+  margin: 20px 0;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+#room-info {
+  display: none;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--gold-dark);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.room-code {
+  font-family: 'Cinzel', serif;
+  font-size: 1.8rem;
+  color: var(--gold);
+  text-align: center;
+  letter-spacing: 4px;
+  margin: 10px 0;
+}
+
+.player-list {
+  margin-top: 15px;
+}
+
+.player-item {
+  padding: 8px;
+  background: rgba(201,168,76,0.1);
+  border-radius: 4px;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+
+#error-msg {
+  display: none;
+  background: rgba(231,76,60,0.2);
+  border: 1px solid #e74c3c;
+  border-radius: 6px;
+  padding: 10px;
+  color: #e88080;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.waiting {
+  text-align: center;
+  color: #aaa;
+  font-style: italic;
+  margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+<div id="lobby-container">
+  <h1>⚡ 7 Wonders Duel</h1>
+  
+  <div id="menu-screen">
+    <div class="input-group">
+      <label for="player-name">Votre nom</label>
+      <input type="text" id="player-name" placeholder="Entrez votre nom" maxlength="20">
+    </div>
+    
+    <button class="btn" onclick="createRoom()">🎮 Créer une partie</button>
+    
+    <div class="divider">— OU —</div>
+    
+    <div class="input-group">
+      <label for="room-code-input">Code de la partie</label>
+      <input type="text" id="room-code-input" placeholder="Entrez le code" maxlength="6">
+    </div>
+    
+    <button class="btn btn-secondary" onclick="joinRoom()">🚪 Rejoindre une partie</button>
+  </div>
+  
+  <div id="room-info">
+    <div style="text-align:center; color:var(--gold-light); font-family:'Cinzel',serif; margin-bottom:10px;">
+      Code de la partie
+    </div>
+    <div class="room-code" id="room-code-display"></div>
+    
+    <div class="player-list" id="player-list"></div>
+    
+    <div class="waiting" id="waiting-msg">En attente du second joueur...</div>
+    
+    <button class="btn" id="start-btn" style="display:none; margin-top:20px;" onclick="startGame()">
+      ⚔ Démarrer la partie
+    </button>
+  </div>
+  
+  <div id="error-msg"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let currentRoomId = null;
+let playerNumber = null;
+
+socket.on('roomCreated', ({ roomId, playerNumber: pNum }) => {
+  currentRoomId = roomId;
+  playerNumber = pNum;
+  showRoomInfo(roomId);
+  updatePlayerList([{ name: document.getElementById('player-name').value, playerNumber: 1 }]);
+});
+
+socket.on('roomJoined', ({ roomId, playerNumber: pNum }) => {
+  currentRoomId = roomId;
+  playerNumber = pNum;
+  showRoomInfo(roomId);
+});
+
+socket.on('playerJoined', ({ players }) => {
+  updatePlayerList(players);
+  if (players.length === 2) {
+    document.getElementById('waiting-msg').style.display = 'none';
+    if (playerNumber === 1) {
+      document.getElementById('start-btn').style.display = 'block';
+    }
+  }
+});
+
+socket.on('gameStarted', (data) => {
+  console.log('Événement gameStarted reçu:', data);
+  
+  // Stocker l'état initial du jeu pour le charger dans game.html
+  if (data && data.gameState) {
+    try {
+      sessionStorage.setItem('initialGameState', JSON.stringify(data.gameState));
+      console.log('État initial stocké dans sessionStorage');
+    } catch (e) {
+      console.error('Erreur de stockage de l\'état initial:', e);
+    }
+  } else {
+    console.warn('Aucun gameState reçu, le jeu s\'initialisera localement');
+  }
+  
+  console.log('Redirection vers game.html...');
+  window.location.href = `/game.html?room=${currentRoomId}&player=${playerNumber}`;
+});
+
+socket.on('error', (msg) => {
+  showError(msg);
+});
+
+socket.on('playerDisconnected', ({ playerName }) => {
+  showError(`${playerName} s'est déconnecté`);
+  setTimeout(() => {
+    window.location.reload();
+  }, 2000);
+});
+
+function createRoom() {
+  const name = document.getElementById('player-name').value.trim();
+  if (!name) {
+    showError('Veuillez entrer votre nom');
+    return;
+  }
+  socket.emit('createRoom', name);
+}
+
+function joinRoom() {
+  const name = document.getElementById('player-name').value.trim();
+  const roomId = document.getElementById('room-code-input').value.trim().toUpperCase();
+  if (!name || !roomId) {
+    showError('Veuillez remplir tous les champs');
+    return;
+  }
+  socket.emit('joinRoom', { roomId, playerName: name });
+}
+
+function startGame() {
+  socket.emit('startGame', currentRoomId);
+}
+
+function showRoomInfo(roomId) {
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('room-info').style.display = 'block';
+  document.getElementById('room-code-display').textContent = roomId;
+}
+
+function updatePlayerList(players) {
+  const list = document.getElementById('player-list');
+  list.innerHTML = players.map(p => 
+    `<div class="player-item">🏛 Joueur ${p.playerNumber}: ${p.name}</div>`
+  ).join('');
+}
+
+function showError(msg) {
+  const errorDiv = document.getElementById('error-msg');
+  errorDiv.textContent = msg;
+  errorDiv.style.display = 'block';
+  setTimeout(() => {
+    errorDiv.style.display = 'none';
+  }, 3000);
+}
+</script>
+
+</body>
+</html>
