@@ -80,12 +80,56 @@ body {
 
 /* ===== MAIN LAYOUT ===== */
 #game-container {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 58fr 42fr;
   gap: 8px;
   padding: 8px;
   max-width: 1600px;
   margin: 0 auto;
+  min-height: calc(100vh - 70px);
+}
+
+#left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+#right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Player panel body: built cards left + wonders right */
+.panel-player-body {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.panel-player-left {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.panel-player-right {
+  flex: 0 0 165px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Wonders stacked vertically in column */
+.wonders-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 /* ===== PLAYER BOARDS ===== */
@@ -95,13 +139,16 @@ body {
   border-radius: 8px;
   padding: 10px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .player-board.active-player {
   border-color: var(--gold);
   box-shadow: 0 0 15px rgba(201,168,76,0.3);
 }
-.player-board.player2 {
-  order: -1;
+#board-p1 {
+  flex: 1;
 }
 
 .player-header {
@@ -635,8 +682,8 @@ body {
 
 /* ===== ACTION PANEL ===== */
 #action-panel {
-  background: linear-gradient(180deg, #0f0c08 0%, #1a1610 100%);
-  border: 1px solid var(--gold-dark);
+  background: linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(139,105,20,0.05) 100%);
+  border: 1px solid rgba(201,168,76,0.5);
   border-radius: 8px;
   padding: 12px;
 }
@@ -1345,137 +1392,125 @@ body {
   <div id="current-player-banner" class="player1-turn">Tour de Joueur 1</div>
 </div>
 
-<!-- GAME CONTAINER -->
+<!-- GAME CONTAINER: 2-column grid -->
 <div id="game-container">
 
-  <!-- PLAYER 2 BOARD (top) -->
-  <div class="player-board player2" id="board-p2">
-    <div class="player-header">
-      <div class="player-name" id="p2-name">⚔ Joueur 2</div>
-      <div class="player-stats">
-        <div class="stat-badge coin-badge tooltip-container">
-          <span class="stat-icon">🪙</span><span id="p2-coins">7</span>
-          <span class="tooltip-text">Pièces d'or. 3 pièces = 1 PV en fin de partie.</span>
-        </div>
-        <div class="stat-badge vp-badge tooltip-container">
-          <span class="stat-icon">⭐</span><span id="p2-vp">0</span>
-          <span class="tooltip-text">Points de Victoire estimés (sans fin de partie).</span>
-        </div>
-        <div class="stat-badge shield-badge tooltip-container">
-          <span class="stat-icon">🛡</span><span id="p2-shields">0</span>
-          <span class="tooltip-text">Boucliers militaires totaux.</span>
-        </div>
-        <div class="stat-badge science-badge tooltip-container">
-          <span class="stat-icon">🔬</span><div class="science-symbols-row" id="p2-science"></div>
-          <span class="tooltip-text">Symboles scientifiques. 6 différents = victoire scientifique!</span>
-        </div>
+  <!-- LEFT PANEL: military, progress, structure, action -->
+  <div id="left-panel">
+
+    <!-- MILITARY TRACK -->
+    <div id="military-track">
+      <h3>⚔ Piste de Conflit ⚔</h3>
+      <div id="conflict-track"></div>
+      <div class="track-labels">
+        <span class="track-label">Capitale J2</span>
+        <span class="track-label">Capitale J1</span>
       </div>
     </div>
-    <div class="player-content">
-      <div class="player-left">
-        <div style="font-size:0.6rem; color:var(--gold); font-family:'Cinzel',serif; margin-bottom:3px;">MERVEILLES</div>
-        <div class="wonders-row" id="wonders-p2"></div>
+
+    <!-- PROGRESS TOKENS -->
+    <div id="progress-area">
+      <h3>✦ JETONS PROGRÈS DISPONIBLES ✦</h3>
+      <div id="progress-tokens-row"></div>
+    </div>
+
+    <!-- CARD STRUCTURE -->
+    <div id="structure-area">
+      <h3 id="structure-title">✦ STRUCTURE DE L'ÂGE I ✦</h3>
+      <div id="card-structure"></div>
+    </div>
+
+    <!-- ACTION PANEL -->
+    <div id="action-panel">
+      <h3 id="action-title">ACTION</h3>
+      <div id="selected-card-info">
+        <div style="color:#666; font-size:0.8rem; text-align:center; padding:10px 0;">← Sélectionnez une carte accessible pour jouer</div>
       </div>
-      <div class="player-right">
-        <div class="player-section-tabs">
-          <div class="ptab active" onclick="switchTab('p2','resources')">Ressources</div>
-          <div class="ptab" onclick="switchTab('p2','built')">Cité</div>
-          <div class="ptab" onclick="switchTab('p2','progress')">Progrès</div>
+      <div id="action-buttons">
+        <button class="action-btn btn-build" id="btn-build" disabled onclick="performBuild()">🏛 Construire</button>
+        <button class="action-btn btn-discard" id="btn-discard" disabled onclick="performDiscard()">💰 Défausser (+pièces)</button>
+        <button class="action-btn btn-wonder" id="btn-wonder" disabled onclick="performWonderBuild()">🌟 Construire Merveille</button>
+      </div>
+      <div id="game-log"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL: opponent (top) + player (bottom) -->
+  <div id="right-panel">
+
+    <!-- OPPONENT PANEL (Player 2, top) -->
+    <div class="player-board player2" id="board-p2">
+      <div class="player-header">
+        <div class="player-name" id="p2-name">⚔ Joueur 2</div>
+        <div class="player-stats">
+          <div class="stat-badge coin-badge tooltip-container">
+            <span class="stat-icon">🪙</span><span id="p2-coins">7</span>
+            <span class="tooltip-text">Pièces d'or. 3 pièces = 1 PV en fin de partie.</span>
+          </div>
+          <div class="stat-badge vp-badge tooltip-container">
+            <span class="stat-icon">⭐</span><span id="p2-vp">0</span>
+            <span class="tooltip-text">Points de Victoire estimés (sans fin de partie).</span>
+          </div>
+          <div class="stat-badge shield-badge tooltip-container">
+            <span class="stat-icon">🛡</span><span id="p2-shields">0</span>
+            <span class="tooltip-text">Boucliers militaires totaux.</span>
+          </div>
+          <div class="stat-badge science-badge tooltip-container">
+            <span class="stat-icon">🔬</span><div class="science-symbols-row" id="p2-science"></div>
+            <span class="tooltip-text">Symboles scientifiques. 6 différents = victoire scientifique!</span>
+          </div>
         </div>
-        <div id="p2-resources" class="ptab-content active">
+      </div>
+      <div class="panel-player-body">
+        <div class="panel-player-left">
           <div class="resources-row" id="p2-resources-row"></div>
-        </div>
-        <div id="p2-built" class="ptab-content">
           <div class="built-cards" id="built-p2"></div>
-        </div>
-        <div id="p2-progress" class="ptab-content">
           <div id="p2-progress-tokens"></div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MILITARY TRACK -->
-  <div id="military-track">
-    <h3>⚔ Piste de Conflit ⚔</h3>
-    <div id="conflict-track"></div>
-    <div class="track-labels">
-      <span class="track-label">Capitale J2</span>
-      <span class="track-label">Capitale J1</span>
-    </div>
-  </div>
-
-  <!-- PROGRESS TOKENS -->
-  <div id="progress-area">
-    <h3>✦ JETONS PROGRÈS DISPONIBLES ✦</h3>
-    <div id="progress-tokens-row"></div>
-  </div>
-
-  <!-- CARD STRUCTURE -->
-  <div id="structure-area">
-    <h3 id="structure-title">✦ STRUCTURE DE L'ÂGE I ✦</h3>
-    <div id="card-structure"></div>
-  </div>
-
-  <!-- ACTION PANEL -->
-  <div id="action-panel">
-    <h3 id="action-title">ACTION</h3>
-    <div id="selected-card-info">
-      <div style="color:#666; font-size:0.8rem; text-align:center; padding:10px 0;">← Sélectionnez une carte accessible pour jouer</div>
-    </div>
-    <div id="action-buttons">
-      <button class="action-btn btn-build" id="btn-build" disabled onclick="performBuild()">🏛 Construire</button>
-      <button class="action-btn btn-discard" id="btn-discard" disabled onclick="performDiscard()">💰 Défausser (+pièces)</button>
-      <button class="action-btn btn-wonder" id="btn-wonder" disabled onclick="performWonderBuild()">🌟 Construire Merveille</button>
-    </div>
-    <div id="game-log"></div>
-  </div>
-
-  <!-- PLAYER 1 BOARD (bottom) -->
-  <div class="player-board player1 active-player" id="board-p1">
-    <div class="player-header">
-      <div class="player-name" id="p1-name">🏛 Joueur 1</div>
-      <div class="player-stats">
-        <div class="stat-badge coin-badge tooltip-container">
-          <span class="stat-icon">🪙</span><span id="p1-coins">7</span>
-          <span class="tooltip-text">Pièces d'or. 3 pièces = 1 PV en fin de partie.</span>
-        </div>
-        <div class="stat-badge vp-badge tooltip-container">
-          <span class="stat-icon">⭐</span><span id="p1-vp">0</span>
-          <span class="tooltip-text">Points de Victoire estimés.</span>
-        </div>
-        <div class="stat-badge shield-badge tooltip-container">
-          <span class="stat-icon">🛡</span><span id="p1-shields">0</span>
-          <span class="tooltip-text">Boucliers militaires totaux.</span>
-        </div>
-        <div class="stat-badge science-badge tooltip-container">
-          <span class="stat-icon">🔬</span><div class="science-symbols-row" id="p1-science"></div>
-          <span class="tooltip-text">Symboles scientifiques. 6 différents = victoire scientifique!</span>
+        <div class="panel-player-right">
+          <div style="font-size:0.6rem; color:var(--gold); font-family:'Cinzel',serif; margin-bottom:2px; text-align:center;">MERVEILLES</div>
+          <div class="wonders-col" id="wonders-p2"></div>
         </div>
       </div>
     </div>
-    <div class="player-content">
-      <div class="player-left">
-        <div style="font-size:0.6rem; color:var(--gold); font-family:'Cinzel',serif; margin-bottom:3px;">MERVEILLES</div>
-        <div class="wonders-row" id="wonders-p1"></div>
-      </div>
-      <div class="player-right">
-        <div class="player-section-tabs">
-          <div class="ptab active" onclick="switchTab('p1','resources')">Ressources</div>
-          <div class="ptab" onclick="switchTab('p1','built')">Cité</div>
-          <div class="ptab" onclick="switchTab('p1','progress')">Progrès</div>
+
+    <!-- PLAYER PANEL (Player 1, bottom) -->
+    <div class="player-board player1 active-player" id="board-p1">
+      <div class="player-header">
+        <div class="player-name" id="p1-name">🏛 Joueur 1</div>
+        <div class="player-stats">
+          <div class="stat-badge coin-badge tooltip-container">
+            <span class="stat-icon">🪙</span><span id="p1-coins">7</span>
+            <span class="tooltip-text">Pièces d'or. 3 pièces = 1 PV en fin de partie.</span>
+          </div>
+          <div class="stat-badge vp-badge tooltip-container">
+            <span class="stat-icon">⭐</span><span id="p1-vp">0</span>
+            <span class="tooltip-text">Points de Victoire estimés.</span>
+          </div>
+          <div class="stat-badge shield-badge tooltip-container">
+            <span class="stat-icon">🛡</span><span id="p1-shields">0</span>
+            <span class="tooltip-text">Boucliers militaires totaux.</span>
+          </div>
+          <div class="stat-badge science-badge tooltip-container">
+            <span class="stat-icon">🔬</span><div class="science-symbols-row" id="p1-science"></div>
+            <span class="tooltip-text">Symboles scientifiques. 6 différents = victoire scientifique!</span>
+          </div>
         </div>
-        <div id="p1-resources" class="ptab-content active">
+      </div>
+      <div class="panel-player-body">
+        <div class="panel-player-left">
           <div class="resources-row" id="p1-resources-row"></div>
-        </div>
-        <div id="p1-built" class="ptab-content">
           <div class="built-cards" id="built-p1"></div>
-        </div>
-        <div id="p1-progress" class="ptab-content">
           <div id="p1-progress-tokens"></div>
         </div>
+        <div class="panel-player-right">
+          <div style="font-size:0.6rem; color:var(--gold); font-family:'Cinzel',serif; margin-bottom:2px; text-align:center;">MERVEILLES</div>
+          <div class="wonders-col" id="wonders-p1"></div>
+        </div>
       </div>
     </div>
+
   </div>
 
 </div>
