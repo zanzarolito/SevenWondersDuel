@@ -214,9 +214,9 @@ body {
   padding: 2px 8px;
   font-size: 0.72rem;
 }
-.coin-pill   { border: 1px solid rgba(241,196,15,0.4); color: #f1c40f; }
-.vp-pill     { border: 1px solid rgba(46,204,113,0.4); color: #2ecc71; }
-.shield-pill { border: 1px solid rgba(231,76,60,0.4); color: #e74c3c; }
+.coin-pill   { border: 1px solid rgba(241,196,15,0.5);  color: #f1c40f; background: rgba(241,196,15,0.12); }
+.vp-pill     { border: 1px solid rgba(100,140,255,0.5); color: #7eaaff; background: rgba(80,100,240,0.12); }
+.shield-pill { border: 1px solid rgba(231,76,60,0.4);   color: #e74c3c; }
 
 /* Body of each player panel */
 .player-body {
@@ -258,9 +258,9 @@ body {
   height: auto !important;
 }
 /* Local player: bigger wonder slots */
-.local-board .wonder-slot  { width: 120px; height: 62px; }
+.local-board .wonder-slot  { width: 130px; min-height: 90px; }
 /* Opponent: slightly smaller wonder slots */
-.opponent-board .wonder-slot { width: 95px; height: 50px; }
+.opponent-board .wonder-slot { width: 100px; min-height: 70px; }
 
 /* Built cards as full card-slots for local player */
 .local-board .built-cards {
@@ -374,19 +374,17 @@ body {
 }
 .wonder-slot {
   width: 110px;
-  height: 58px;
+  min-height: 80px;
+  height: auto;
   border-radius: 6px;
   border: 1px solid var(--gold-dark);
   background: linear-gradient(135deg, #2a2010, #1a1408);
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  flex-direction: row;
   cursor: pointer;
   position: relative;
   transition: all 0.2s;
   overflow: hidden;
-  padding: 3px;
 }
 .wonder-slot:hover:not(.wonder-built) { border-color: var(--gold); box-shadow: 0 0 10px rgba(201,168,76,0.4); }
 .wonder-slot.wonder-built { opacity: 0.5; border-style: dashed; cursor: default; }
@@ -707,14 +705,14 @@ body {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: radial-gradient(circle, #f0d060, #a07010);
-  border: 1.5px solid #f5e080;
+  background: radial-gradient(circle, #6080f0, #2030a0);
+  border: 1.5px solid #80a0ff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.6rem;
   font-weight: 900;
-  color: #2a1a00;
+  color: #ffffff;
   z-index: 4;
   box-shadow: 0 1px 4px rgba(0,0,0,0.6);
 }
@@ -1170,7 +1168,8 @@ body {
 /* ===== WONDER CARD — Style horizontal (comme les vraies) ===== */
 .wonder-card {
   width: 200px;
-  height: 130px;
+  min-height: 130px;
+  height: auto;
   border-radius: 12px;
   display: flex;
   flex-direction: row;
@@ -1481,7 +1480,7 @@ body {
       <div class="player-name" id="p2-name">⚔ Joueur 2</div>
       <div class="stat-pills">
         <span class="pill coin-pill">🪙&nbsp;<span id="p2-coins">7</span></span>
-        <span class="pill vp-pill">⭐&nbsp;<span id="p2-vp">0</span></span>
+        <span class="pill vp-pill">🏛&nbsp;<span id="p2-vp">0</span></span>
         <span class="pill shield-pill">🛡&nbsp;<span id="p2-shields">0</span></span>
         <span class="pill" style="border:1px solid rgba(39,174,96,0.4);color:#2ecc71;">🔬&nbsp;<span id="p2-science" class="science-symbols-row" style="display:inline-flex;gap:2px;"></span></span>
       </div>
@@ -1505,7 +1504,7 @@ body {
       <div class="player-name" id="p1-name">🏛 Joueur 1</div>
       <div class="stat-pills">
         <span class="pill coin-pill">🪙&nbsp;<span id="p1-coins">7</span></span>
-        <span class="pill vp-pill">⭐&nbsp;<span id="p1-vp">0</span></span>
+        <span class="pill vp-pill">🏛&nbsp;<span id="p1-vp">0</span></span>
         <span class="pill shield-pill">🛡&nbsp;<span id="p1-shields">0</span></span>
         <span class="pill" style="border:1px solid rgba(39,174,96,0.4);color:#2ecc71;">🔬&nbsp;<span id="p1-science" class="science-symbols-row" style="display:inline-flex;gap:2px;"></span></span>
       </div>
@@ -2061,8 +2060,8 @@ function buildWonderCardElement(w, forDraft = false) {
   const costDiv = document.createElement('div');
   costDiv.className = forDraft ? 'wonder-card-cost' : 'wonder-card-cost';
   costDiv.style.cssText = forDraft
-    ? 'width:32px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:rgba(0,0,0,0.55);padding:5px 3px;z-index:3'
-    : 'width:26px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:rgba(0,0,0,0.55);padding:4px 2px;z-index:3';
+    ? 'width:32px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px;gap:3px;background:rgba(0,0,0,0.55);padding:6px 3px;z-index:3'
+    : 'width:26px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;background:rgba(0,0,0,0.55);padding:5px 2px;z-index:3';
   const iconSize = forDraft ? '22px' : '18px';
   Object.entries(w.cost).forEach(([res, amt]) => {
     for (let i = 0; i < amt; i++) {
@@ -2077,7 +2076,7 @@ function buildWonderCardElement(w, forDraft = false) {
 
   // Center: art
   const artDiv = document.createElement('div');
-  artDiv.style.cssText = 'flex:1;position:relative;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;';
+  artDiv.style.cssText = 'flex:1;position:relative;overflow:hidden;display:flex;align-items:stretch;justify-content:center;min-height:80px;';
   const bg = document.createElement('div');
   bg.style.cssText = `position:absolute;inset:0;background:${WONDER_GRAD[w.id]||'linear-gradient(135deg,#3a2010,#1a0a08)'};`;
   artDiv.appendChild(bg);
@@ -2092,7 +2091,7 @@ function buildWonderCardElement(w, forDraft = false) {
 
   // Right: effects
   const effDiv = document.createElement('div');
-  effDiv.style.cssText = `width:${forDraft?'40':'32'}px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${forDraft?5:3}px;background:rgba(0,0,0,0.55);padding:5px 3px;z-index:3`;
+  effDiv.style.cssText = `width:${forDraft?'40':'32'}px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px;gap:${forDraft?5:4}px;background:rgba(0,0,0,0.55);padding:6px 3px;z-index:3`;
   const effSize = forDraft ? '30px' : '24px';
   const effFont = forDraft ? '0.8rem' : '0.65rem';
 
@@ -2100,10 +2099,10 @@ function buildWonderCardElement(w, forDraft = false) {
     const ico = document.createElement('div');
     ico.style.cssText = `width:${effSize};height:${effSize};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:${effFont};font-weight:900;border:1.5px solid rgba(255,255,255,0.3);flex-shrink:0;`;
     if (e.type === 'vp') {
-      ico.style.background = 'radial-gradient(circle,#f5d060,#a07010)';
-      ico.style.borderColor = '#f0e060';
-      ico.style.color = '#2a1a00';
-      ico.textContent = e.amount;
+      ico.style.background = 'radial-gradient(circle,#6080f0,#2030a0)';
+      ico.style.borderColor = '#80a0ff';
+      ico.style.color = '#ffffff';
+      ico.textContent = `🏛${e.amount}`;
       ico.title = `${e.amount} Points de victoire`;
     } else if (e.type === 'coins') {
       ico.style.background = 'radial-gradient(circle,#f5d060,#c09010)';
