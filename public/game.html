@@ -110,6 +110,15 @@ body {
   align-items: center;
   gap: 6px;
 }
+#progress-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.55rem;
+  color: var(--gold);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 #progress-tokens-row {
   display: flex;
   gap: 5px;
@@ -213,7 +222,8 @@ body {
 .player-body {
   flex: 1;
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   overflow: hidden;
   min-height: 0;
 }
@@ -225,28 +235,32 @@ body {
   flex-direction: column;
   gap: 5px;
   min-width: 0;
+  min-height: 0;
 }
 
 /* ── Adversaire (tiers haut) : résumé compact ── */
 .opponent-board .built-card-mini { font-size: 0.6rem; height: 22px; }
-.opponent-board .wonders-col-area {
-  flex-shrink: 0;
-  width: 130px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  overflow: hidden;
-}
 
-/* ── Joueur local (deux tiers bas) : tableau complet avec merveilles ── */
-.local-board .wonders-col-area {
+/* ── Wonders: horizontal strip at bottom of each player panel ── */
+.wonders-col-area {
   flex-shrink: 0;
-  width: 175px;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   overflow: hidden;
 }
+.wonders-col-list {
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  gap: 5px;
+  overflow: visible !important;
+  height: auto !important;
+}
+/* Local player: bigger wonder slots */
+.local-board .wonder-slot  { width: 120px; height: 62px; }
+/* Opponent: slightly smaller wonder slots */
+.opponent-board .wonder-slot { width: 95px; height: 50px; }
 
 /* Built cards as full card-slots for local player */
 .local-board .built-cards {
@@ -822,7 +836,7 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.75);
-  z-index: 1000;
+  z-index: 5000;
   align-items: center;
   justify-content: center;
 }
@@ -1435,6 +1449,7 @@ body {
   </div>
 
   <div id="progress-area">
+    <span id="progress-label">Jetons Progrès</span>
     <div id="progress-tokens-row"></div>
   </div>
 
