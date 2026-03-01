@@ -36,38 +36,38 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* ===== BODY: full-viewport 2-column grid ===== */
+/* ===== BODY: 2-column viewport ===== */
 body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Lato', sans-serif;
   display: grid;
-  grid-template-columns: 1fr 280px;
-  grid-template-rows: 48px 1fr;
+  grid-template-columns: 1fr 290px;
   height: 100vh;
   overflow: hidden;
 }
 
-/* ===== HEADER (full width, 48px) ===== */
-#header {
-  grid-column: 1 / -1;
+/* ===== LEFT AREA (conflict track + tokens + pyramid + action) ===== */
+#left-area {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  padding: 8px;
+  gap: 6px;
+  border-right: 1px solid var(--border);
+}
+
+/* Conflict zone: age badge + conflict track + turn banner */
+#conflict-zone {
+  flex-shrink: 0;
   background: #120f06;
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  gap: 12px;
-  z-index: 10;
-}
-#header h1 {
-  font-family: 'Cinzel Decorative', serif;
-  font-size: 0.85rem;
-  color: var(--gold);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  flex-shrink: 0;
-  text-shadow: 0 0 12px rgba(201,168,76,0.4);
+  padding: 5px 10px;
+  gap: 10px;
 }
 #age-indicator {
   font-family: 'Cinzel', serif;
@@ -79,7 +79,6 @@ body {
   white-space: nowrap;
   flex-shrink: 0;
 }
-/* Conflict track embedded in header */
 #conflict-track-wrap {
   flex: 1;
   display: flex;
@@ -100,30 +99,16 @@ body {
 .player2-turn { background: rgba(122,26,26,0.2); border: 1px solid var(--red-light); color: #e86060; }
 @keyframes turnPulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
 
-/* ===== MAIN (left column: card structure + action bar) ===== */
-#main {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 6px;
-  gap: 6px;
-  border-right: 1px solid var(--border);
-}
-
-/* Progress tokens — compact top strip */
+/* Progress tokens strip */
 #progress-area {
   flex-shrink: 0;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 4px 8px;
-}
-#progress-area h3 {
-  font-family: 'Cinzel', serif;
-  font-size: 0.6rem;
-  color: var(--gold);
-  letter-spacing: 2px;
-  margin-bottom: 3px;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 #progress-tokens-row {
   display: flex;
@@ -132,7 +117,7 @@ body {
   flex-wrap: wrap;
 }
 
-/* Card pyramid area */
+/* Card pyramid — takes all remaining vertical space */
 #structure-area {
   flex: 1;
   overflow: hidden;
@@ -141,6 +126,9 @@ body {
   align-items: center;
   justify-content: center;
   gap: 4px;
+  background: linear-gradient(180deg, #0f0e0a 0%, #1a1810 100%);
+  border: 1px solid #3a3420;
+  border-radius: 8px;
 }
 #structure-area h3 {
   font-family: 'Cinzel', serif;
@@ -161,15 +149,13 @@ body {
   justify-content: center;
 }
 
-/* ===== SIDEBAR (right 280px: two player panels) ===== */
-#sidebar {
+/* ===== RIGHT AREA (top: opponent, bottom: local player) ===== */
+#right-area {
   display: grid;
-  grid-template-rows: 1fr 8px 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 100vh;
   overflow: hidden;
   background: var(--panel);
-}
-#sidebar-divider {
-  background: var(--border);
 }
 
 /* Player panels */
@@ -177,22 +163,26 @@ body {
   display: flex;
   flex-direction: column;
   padding: 8px;
-  gap: 4px;
+  gap: 5px;
   overflow: hidden;
-  border: 1px solid transparent;
+  border: 2px solid transparent;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
-.player-panel.active-player {
-  border-color: var(--gold);
-  box-shadow: inset 0 0 10px rgba(201,168,76,0.15);
+.player-panel + .player-panel {
+  border-top: 2px solid var(--border);
 }
-.panel-header {
+.player-board.active-player {
+  border-color: var(--gold) !important;
+  box-shadow: inset 0 0 12px rgba(201,168,76,0.15) !important;
+}
+
+/* Stats bar */
+.stats-bar {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 5px;
   flex-wrap: wrap;
-  gap: 4px;
-  flex-shrink: 0;
 }
 .player-name {
   font-family: 'Cinzel', serif;
@@ -201,34 +191,63 @@ body {
 }
 #board-p1 .player-name { color: #7fb8e8; }
 #board-p2 .player-name { color: #e88080; }
-.stat-pills { display: flex; gap: 4px; flex-wrap: wrap; }
+.stat-pills { display: flex; gap: 3px; flex-wrap: wrap; }
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   background: rgba(0,0,0,0.35);
   border-radius: 10px;
-  padding: 1px 7px;
-  font-size: 0.68rem;
+  padding: 1px 6px;
+  font-size: 0.65rem;
 }
 .coin-pill   { border: 1px solid rgba(241,196,15,0.4); color: #f1c40f; }
 .vp-pill     { border: 1px solid rgba(46,204,113,0.4); color: #2ecc71; }
 .shield-pill { border: 1px solid rgba(231,76,60,0.4); color: #e74c3c; }
-.player-resources { flex-shrink: 0; min-height: 18px; }
-.player-buildings { flex-shrink: 0; min-height: 20px; }
-.science-row { flex-shrink: 0; min-height: 18px; }
-.progress-row { flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 3px; min-height: 16px; }
-.wonders-label { font-size: 0.52rem; color: var(--gold); font-family: 'Cinzel', serif; letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; }
-.wonders-row { display: flex; gap: 4px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; flex-shrink: 0; }
 
-/* ===== PLAYER BOARDS (sidebar panels - active-player toggled by JS) ===== */
-.player-board {
-  /* alias for .player-panel — JS adds/removes active-player class here */
+/* Body of each player panel: built area (left) + wonders column (right) */
+.player-body {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  overflow: hidden;
+  min-height: 0;
 }
-.player-board.active-player {
-  border-color: var(--gold) !important;
-  box-shadow: inset 0 0 10px rgba(201,168,76,0.15) !important;
+.built-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
+.wonders-col-area {
+  flex-shrink: 0;
+  width: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+.wonders-col-title {
+  font-size: 0.5rem;
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: center;
+  flex-shrink: 0;
+}
+.wonders-col-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.progress-row { display: flex; flex-wrap: wrap; gap: 3px; }
+.resources-row { display: flex; gap: 3px; flex-wrap: wrap; }
 
 /* Legacy stat-badge kept for any remaining references */
 .player-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
@@ -692,48 +711,28 @@ body {
 }
 .card-info-btn:hover { background: rgba(255,255,255,0.2); color: white; }
 
-/* ===== ACTION PANEL (horizontal flex bar) ===== */
+/* ===== ACTION PANEL (bottom of left-area) ===== */
 #action-panel {
   flex-shrink: 0;
   display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: 8px;
-  background: linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(139,105,20,0.05) 100%);
-  border: 1px solid rgba(201,168,76,0.5);
-  border-radius: 8px;
-  padding: 8px;
-  min-height: 72px;
-  max-height: 90px;
+  flex-direction: column;
+  gap: 5px;
 }
-#action-panel h3 { display: none; }
 #selected-card-info {
-  flex: 1;
   background: rgba(0,0,0,0.3);
   border-radius: 6px;
-  padding: 6px 8px;
-  margin-bottom: 0;
-  min-height: 0;
+  padding: 5px 10px;
+  min-height: 24px;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow: hidden;
-  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
 }
-.selected-card-name {
-  font-family: 'Cinzel', serif;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-.selected-card-details {
-  font-size: 0.68rem;
-  color: #ccc;
-  line-height: 1.4;
-}
-.cost-detail {
-  font-size: 0.68rem;
-  color: #aaa;
-}
+.selected-card-name { font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: 700; }
+.selected-card-details { font-size: 0.68rem; color: #ccc; line-height: 1.4; }
+.cost-detail { font-size: 0.68rem; color: #aaa; }
 .cost-detail span { color: var(--gold); font-weight: 700; }
 .cost-warning { color: #e74c3c; }
 .cost-ok { color: #2ecc71; }
@@ -741,48 +740,44 @@ body {
 
 #action-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-shrink: 0;
+  gap: 8px;
 }
 .action-btn {
   flex: 1;
-  padding: 5px 10px;
+  padding: 10px 8px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: 'Cinzel', serif;
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  white-space: nowrap;
+  gap: 5px;
   letter-spacing: 0.5px;
-  min-width: 110px;
 }
-.action-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.4); }
+.action-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 .action-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-.btn-build {
-  background: linear-gradient(135deg, #27ae60, #1e8449);
-  color: white;
-  border: 1px solid #2ecc71;
-}
-.btn-discard {
-  background: linear-gradient(135deg, #c0392b, #8b1a10);
-  color: white;
-  border: 1px solid #e74c3c;
-}
-.btn-wonder {
-  background: linear-gradient(135deg, #8b6914, #5a4010);
-  color: var(--gold-light);
-  border: 1px solid var(--gold);
-}
-.btn-build:hover:not(:disabled) { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.btn-build   { background: linear-gradient(135deg, #27ae60, #1e8449); color: white; border: 1px solid #2ecc71; }
+.btn-discard { background: linear-gradient(135deg, #c0392b, #8b1a10); color: white; border: 1px solid #e74c3c; }
+.btn-wonder  { background: linear-gradient(135deg, #8b6914, #5a4010); color: var(--gold-light); border: 1px solid var(--gold); }
+.btn-build:hover:not(:disabled)   { background: linear-gradient(135deg, #2ecc71, #27ae60); }
 .btn-discard:hover:not(:disabled) { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-.btn-wonder:hover:not(:disabled) { background: linear-gradient(135deg, #c9a84c, #8b6914); }
+.btn-wonder:hover:not(:disabled)  { background: linear-gradient(135deg, #c9a84c, #8b6914); }
+
+/* Game log */
+#game-log {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid #2a2010;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.65rem;
+  color: #888;
+  max-height: 50px;
+  overflow-y: auto;
+}
 
 /* ===== MODAL / TOOLTIP ===== */
 #modal-overlay {
@@ -1277,11 +1272,11 @@ body {
   font-size: 0.65rem;
 }
 
-/* Wonder slots dans le plateau joueur — aussi horizontaux mais plus petits */
+/* Wonder slots dans le plateau joueur — compacts, empilés verticalement */
 .wonder-slot {
-  width: 155px;
-  height: 100px;
-  border-radius: 9px;
+  width: 120px;
+  height: 70px;
+  border-radius: 7px;
   display: flex;
   flex-direction: row;
   cursor: pointer;
@@ -1357,20 +1352,7 @@ body {
 .player-left { flex: 0 0 auto; }
 .player-right { flex: 1; min-width: 200px; }
 
-/* Log — inline in action bar */
-#game-log {
-  width: 150px;
-  flex-shrink: 0;
-  background: rgba(0,0,0,0.4);
-  border: 1px solid #2a2010;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 0.62rem;
-  color: #888;
-  overflow-y: auto;
-  margin-top: 0;
-  max-height: none;
-}
+
 #game-log .log-entry { padding: 1px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 #game-log .log-entry:last-child { color: var(--parchment); }
 
@@ -1404,21 +1386,18 @@ body {
 </head>
 <body>
 
-<!-- HEADER: logo | age | conflict track | turn banner -->
-<div id="header">
-  <h1>⚡ 7 Wonders Duel</h1>
-  <div id="age-indicator">Âge I</div>
-  <div id="conflict-track-wrap">
-    <div id="conflict-track"></div>
-  </div>
-  <div id="current-player-banner" class="player1-turn">Tour de Joueur 1</div>
-</div>
+<!-- LEFT AREA: conflict track + progress tokens + card pyramid + action buttons -->
+<div id="left-area">
 
-<!-- MAIN: progress tokens + card pyramid + action bar -->
-<div id="main">
+  <div id="conflict-zone">
+    <div id="age-indicator">Âge I</div>
+    <div id="conflict-track-wrap">
+      <div id="conflict-track"></div>
+    </div>
+    <div id="current-player-banner" class="player1-turn">Tour de Joueur 1</div>
+  </div>
 
   <div id="progress-area">
-    <h3>✦ JETONS PROGRÈS ✦</h3>
     <div id="progress-tokens-row"></div>
   </div>
 
@@ -1429,7 +1408,7 @@ body {
 
   <div id="action-panel">
     <div id="selected-card-info">
-      <div style="color:#555; font-size:0.75rem; text-align:center; padding:4px 0;">← Sélectionnez une carte accessible</div>
+      <span style="color:#555; font-size:0.75rem;">← Sélectionnez une carte accessible</span>
     </div>
     <div id="action-buttons">
       <button class="action-btn btn-build" id="btn-build" disabled onclick="performBuild()">🏛 Construire</button>
@@ -1441,46 +1420,55 @@ body {
 
 </div>
 
-<!-- SIDEBAR: two player panels -->
-<div id="sidebar">
+<!-- RIGHT AREA: two player panels (top = opponent, bottom = local player) -->
+<div id="right-area">
 
-  <!-- OPPONENT (Player 2, top) -->
+  <!-- OPPONENT (Player 2 — top half) -->
   <div class="player-panel player-board player2" id="board-p2">
-    <div class="panel-header">
+    <div class="stats-bar">
       <div class="player-name" id="p2-name">⚔ Joueur 2</div>
       <div class="stat-pills">
         <span class="pill coin-pill">🪙&nbsp;<span id="p2-coins">7</span></span>
         <span class="pill vp-pill">⭐&nbsp;<span id="p2-vp">0</span></span>
         <span class="pill shield-pill">🛡&nbsp;<span id="p2-shields">0</span></span>
+        <span class="pill" style="border:1px solid rgba(39,174,96,0.4);color:#2ecc71;">🔬&nbsp;<span id="p2-science" class="science-symbols-row" style="display:inline-flex;gap:2px;"></span></span>
       </div>
     </div>
-    <div class="player-resources"><div class="resources-row" id="p2-resources-row"></div></div>
-    <div class="player-buildings"><div class="built-cards" id="built-p2"></div></div>
-    <div class="science-row"><div class="science-symbols-row" id="p2-science"></div></div>
-    <div class="progress-row" id="p2-progress-tokens"></div>
-    <div class="wonders-label">Merveilles</div>
-    <div class="wonders-row" id="wonders-p2"></div>
+    <div class="player-body">
+      <div class="built-area">
+        <div class="resources-row" id="p2-resources-row"></div>
+        <div class="built-cards" id="built-p2"></div>
+        <div class="progress-row" id="p2-progress-tokens"></div>
+      </div>
+      <div class="wonders-col-area">
+        <div class="wonders-col-title">Merveilles</div>
+        <div class="wonders-col-list" id="wonders-p2"></div>
+      </div>
+    </div>
   </div>
 
-  <!-- DIVIDER -->
-  <div id="sidebar-divider"></div>
-
-  <!-- LOCAL PLAYER (Player 1, bottom) -->
+  <!-- LOCAL PLAYER (Player 1 — bottom half) -->
   <div class="player-panel player-board player1 active-player" id="board-p1">
-    <div class="panel-header">
+    <div class="stats-bar">
       <div class="player-name" id="p1-name">🏛 Joueur 1</div>
       <div class="stat-pills">
         <span class="pill coin-pill">🪙&nbsp;<span id="p1-coins">7</span></span>
         <span class="pill vp-pill">⭐&nbsp;<span id="p1-vp">0</span></span>
         <span class="pill shield-pill">🛡&nbsp;<span id="p1-shields">0</span></span>
+        <span class="pill" style="border:1px solid rgba(39,174,96,0.4);color:#2ecc71;">🔬&nbsp;<span id="p1-science" class="science-symbols-row" style="display:inline-flex;gap:2px;"></span></span>
       </div>
     </div>
-    <div class="player-resources"><div class="resources-row" id="p1-resources-row"></div></div>
-    <div class="player-buildings"><div class="built-cards" id="built-p1"></div></div>
-    <div class="science-row"><div class="science-symbols-row" id="p1-science"></div></div>
-    <div class="progress-row" id="p1-progress-tokens"></div>
-    <div class="wonders-label">Merveilles</div>
-    <div class="wonders-row" id="wonders-p1"></div>
+    <div class="player-body">
+      <div class="built-area">
+        <div class="resources-row" id="p1-resources-row"></div>
+        <div class="built-cards" id="built-p1"></div>
+        <div class="progress-row" id="p1-progress-tokens"></div>
+      </div>
+      <div class="wonders-col-area">
+        <div class="wonders-col-title">Merveilles</div>
+        <div class="wonders-col-list" id="wonders-p1"></div>
+      </div>
+    </div>
   </div>
 
 </div>
