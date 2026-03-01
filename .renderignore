@@ -1,0 +1,12 @@
+# Fichiers à ignorer lors du déploiement sur Render
+*.md
+!README.md
+.git
+.gitignore
+.vscode
+.idea
+test-server.js
+DEBUG*.md
+TROUBLESHOOTING.md
+QUICKSTART.md
+TEST.md

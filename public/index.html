@@ -198,7 +198,13 @@ input:focus {
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket = io();
+// Configuration Socket.IO pour Render.com
+const socket = io({
+  transports: ['websocket', 'polling'],
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionAttempts: 5
+});
 let currentRoomId = null;
 let playerNumber = null;
 

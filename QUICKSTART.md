@@ -1,136 +1,112 @@
-# 🚀 Démarrage Rapide
+# 🚀 Guide de Démarrage Rapide
 
-## Installation (première fois)
+## Installation Locale (2 minutes)
 
 ```bash
+# 1. Cloner ou télécharger le projet
+cd 7-wonders-duel
+
+# 2. Installer les dépendances
 npm install
-```
 
-## Démarrer le serveur
-
-```bash
+# 3. Démarrer le serveur
 npm start
 ```
 
-Vous devriez voir:
-```
-Serveur démarré sur le port 3000
-```
+✅ Ouvrez `http://localhost:3000` dans votre navigateur
 
-## Tester que tout fonctionne
+## Déploiement sur Render.com (5 minutes)
 
-Dans un autre terminal:
+### Prérequis
+- Compte GitHub (gratuit)
+- Compte Render.com (gratuit)
+
+### Étapes
+
+#### 1. Pousser sur GitHub
+
 ```bash
-npm test
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/VOTRE-USERNAME/7-wonders-duel.git
+git push -u origin main
 ```
 
-Vous devriez voir:
+#### 2. Déployer sur Render
+
+1. Allez sur [render.com](https://render.com)
+2. Connectez-vous avec GitHub
+3. Cliquez sur **New +** → **Web Service**
+4. Sélectionnez votre repository `7-wonders-duel`
+5. Configurez :
+   - **Name:** `7-wonders-duel` (ou votre choix)
+   - **Environment:** `Node`
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+   - **Plan:** `Free`
+6. Cliquez sur **Create Web Service**
+
+⏳ Attendez 2-3 minutes que le déploiement se termine
+
+✅ Votre jeu est en ligne ! URL : `https://votre-app.onrender.com`
+
+### ⚠️ Problème Socket.IO 404 ?
+
+Si vous voyez des erreurs 404 dans la console :
 ```
-✅ Serveur accessible
-✅ game.html accessible
-✅ multiplayer.js accessible
-✅ game-layout.css accessible
-
-🎉 Tous les tests sont passés!
-```
-
-## Jouer
-
-### Option 1: Mode Solo (test rapide)
-Ouvrez directement:
-```
-http://localhost:3000/game.html
-```
-
-### Option 2: Mode Multijoueur (2 joueurs)
-
-**Joueur 1:**
-1. Ouvrez `http://localhost:3000`
-2. Entrez votre nom
-3. Cliquez "Créer une partie"
-4. Notez le code (ex: "A3F7K2")
-
-**Joueur 2:**
-1. Ouvrez `http://localhost:3000` dans un autre navigateur/onglet incognito
-2. Entrez votre nom
-3. Entrez le code de la room
-4. Cliquez "Rejoindre une partie"
-
-**Démarrage:**
-1. Joueur 1 clique "Démarrer la partie"
-2. Le draft des merveilles commence!
-
-## Draft des Merveilles
-
-### Groupe 1
-```
-J1 choisit 1 merveille
-J2 choisit 2 merveilles
-J1 choisit 1 merveille
+GET https://votre-app.onrender.com/socket.io/... 404 (Not Found)
 ```
 
-### Groupe 2
-```
-J2 choisit 1 merveille
-J1 choisit 2 merveilles
-J2 choisit 1 merveille
-```
+**Solution :** Les fichiers ont déjà été mis à jour avec la bonne configuration Socket.IO. Si le problème persiste :
 
-Résultat: Chaque joueur a 4 merveilles
+1. Vérifiez les logs Render pour voir si le serveur démarre correctement
+2. Consultez [RENDER_SOCKETIO_FIX.md](RENDER_SOCKETIO_FIX.md) pour plus de détails
 
-## Problèmes?
+## Test de l'Application
 
-### Le serveur ne démarre pas
-```bash
-# Vérifier que le port 3000 est libre
-lsof -i :3000
+### En local
+1. Ouvrez deux onglets sur `http://localhost:3000`
+2. Onglet 1 : Créez une partie
+3. Onglet 2 : Rejoignez avec le code
+4. Jouez !
 
-# Si occupé, tuer le processus
-kill -9 <PID>
-
-# Ou changer le port
-PORT=8080 npm start
-```
-
-### Erreur "Cannot find module"
-```bash
-# Réinstaller les dépendances
-rm -rf node_modules
-npm install
-```
-
-### Page blanche
-1. Ouvrir la console (F12)
-2. Vérifier les erreurs
-3. Rafraîchir (Ctrl+Shift+R)
-
-### Les joueurs ne se synchronisent pas
-1. Vérifier que les 2 joueurs sont sur le même serveur
-2. Vérifier la console serveur pour les logs
-3. Rafraîchir les deux pages
+### En ligne (Render)
+1. Ouvrez `https://votre-app.onrender.com` sur deux appareils
+2. Créez et rejoignez une partie
+3. Jouez !
 
 ## Commandes Utiles
 
 ```bash
-# Démarrer avec auto-reload (développement)
+# Démarrer en mode développement (auto-reload)
 npm run dev
 
 # Tester le serveur
 npm test
 
-# Voir les logs en temps réel
-# (déjà affiché par npm start)
-
-# Arrêter le serveur
-Ctrl+C
+# Voir les logs en production (Render)
+# → Allez dans le dashboard Render → Logs
 ```
 
 ## Prochaines Étapes
 
-Une fois le draft terminé:
-1. L'Âge I commence
-2. Joueur 1 joue en premier
-3. Sélectionnez une carte accessible
-4. Choisissez: Construire / Défausser / Merveille
+- Lisez [README.md](README.md) pour comprendre l'architecture
+- Consultez [DEPLOY_RENDER.md](DEPLOY_RENDER.md) pour le guide complet
+- Voir [TROUBLESHOOTING.md](TROUBLESHOOTING.md) en cas de problème
 
-Bon jeu! 🎲
+## Limitations du Plan Gratuit Render
+
+- ⏸️ Mise en veille après 15 min d'inactivité
+- 🔄 Redémarrage automatique à la première requête (30-60 secondes)
+- 💾 750 heures/mois (suffisant pour usage personnel)
+
+**Astuce :** Utilisez [UptimeRobot](https://uptimerobot.com) pour garder votre app active (ping toutes les 5 minutes).
+
+## Support
+
+Des questions ? Consultez la documentation :
+- [README.md](README.md) - Vue d'ensemble
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Dépannage
+- [DEBUG.md](DEBUG.md) - Débogage

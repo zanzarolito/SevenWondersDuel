@@ -136,13 +136,42 @@ Voir [DEBUG_SYNC.md](DEBUG_SYNC.md) pour plus de détails.
 
 ### Autres Problèmes
 
+- **Erreurs Socket.IO 404 sur Render:** Voir [RENDER_SOCKETIO_FIX.md](RENDER_SOCKETIO_FIX.md) ⚠️
 - **Erreurs de connexion:** Voir [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 - **Problèmes de draft:** Voir [DRAFT_SYSTEM.md](DRAFT_SYSTEM.md)
 - **Synchronisation:** Voir [SYNC.md](SYNC.md)
 
 ## 🚀 Déploiement
 
-Pour déployer sur un serveur :
+### Déploiement sur Render.com (Gratuit) ⭐
+
+**Guide rapide (5 minutes):** [DEPLOY_QUICK.md](DEPLOY_QUICK.md)  
+**Guide complet:** [DEPLOY_RENDER.md](DEPLOY_RENDER.md)
+
+#### Résumé Express
+
+```bash
+# 1. Pousser sur GitHub
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin https://github.com/USERNAME/7-wonders-duel.git
+git push -u origin main
+
+# 2. Aller sur render.com → Connecter avec GitHub
+# 3. New + → Web Service → Sélectionner le repo
+# 4. Configurer:
+#    - Build: npm install
+#    - Start: npm start
+#    - Plan: Free
+# 5. Deploy
+
+# ✅ En ligne en 2-3 minutes!
+```
+
+**URL:** `https://votre-app.onrender.com`
+
+### Déploiement Manuel (VPS/Serveur)
 
 ```bash
 # Définir le port (optionnel, défaut: 3000)
@@ -152,7 +181,7 @@ export PORT=8080
 npm start
 ```
 
-Compatible avec Heroku, Railway, Render, etc.
+Compatible avec Heroku, Railway, Fly.io, VPS, etc.
 
 ## 📄 Licence
 

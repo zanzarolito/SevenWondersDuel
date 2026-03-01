@@ -5,9 +5,24 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
 
+// Configuration Socket.IO avec options pour Render.com
+const io = socketIO(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  },
+  transports: ['websocket', 'polling'],
+  allowEIO3: true
+});
+
+// Servir les fichiers statiques
 app.use(express.static('public'));
+
+// Route de santé pour Render.com
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // Gestion des rooms
 const rooms = new Map();

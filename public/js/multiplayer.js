@@ -17,7 +17,14 @@ class MultiplayerManager {
       return false;
     }
 
-    this.socket = io();
+    // Configuration Socket.IO pour Render.com
+    this.socket = io({
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
+    });
+    
     this.setupSocketListeners();
     return true;
   }
