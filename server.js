@@ -1,16 +1,49 @@
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
-const path = require('path');
+const compression = require('compression');
+const { WONDER_DATA, PROGRESS_DATA } = require('./public/js/shared-data');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
 
+// En production, restreindre les origines CORS à l'URL du déploiement.
+// Définir CLIENT_ORIGIN dans les variables d'environnement (ex: https://monapp.render.com).
+// En développement (pas de CLIENT_ORIGIN), tout est autorisé.
+const allowedOrigin = process.env.CLIENT_ORIGIN || '*';
+
+const io = socketIO(server, {
+  cors: {
+    origin: allowedOrigin,
+    methods: ['GET', 'POST'],
+  },
+});
+
+app.use(compression());   // gzip sur tous les fichiers statiques et réponses
 app.use(express.static('public'));
 
 // Gestion des rooms
 const rooms = new Map();
+
+// Durées d'expiration
+const LOBBY_TIMEOUT   = 10 * 60 * 1000;  // 10 min sans 2e joueur
+const PLAYING_TIMEOUT =  2 * 60 * 60 * 1000;  // 2 h sans activité en partie
+
+// Nettoyage périodique (toutes les 5 min)
+setInterval(() => {
+  const now = Date.now();
+  for (const [roomId, room] of rooms.entries()) {
+    const idle = now - room.lastActivity;
+    const expired =
+      (room.status === 'waiting' && idle > LOBBY_TIMEOUT) ||
+      (room.status === 'playing' && idle > PLAYING_TIMEOUT);
+    if (expired) {
+      io.to(roomId).emit('roomExpired', { reason: 'Partie expirée pour inactivité.' });
+      rooms.delete(roomId);
+      console.log(`[cleanup] Room ${roomId} supprimée (${Math.round(idle / 60000)} min d'inactivité)`);
+    }
+  }
+}, 5 * 60 * 1000);
 
 io.on('connection', (socket) => {
   console.log('Nouveau joueur connecté:', socket.id);
@@ -22,7 +55,8 @@ io.on('connection', (socket) => {
       id: roomId,
       players: [{ id: socket.id, name: playerName, playerNumber: 1 }],
       gameState: null,
-      status: 'waiting'
+      status: 'waiting',
+      lastActivity: Date.now(),
     });
     socket.join(roomId);
     socket.emit('roomCreated', { roomId, playerNumber: 1 });
@@ -46,6 +80,7 @@ io.on('connection', (socket) => {
     }
 
     room.players.push({ id: socket.id, name: playerName, playerNumber: 2 });
+    room.lastActivity = Date.now();
     socket.join(roomId);
     socket.emit('roomJoined', { roomId, playerNumber: 2 });
     
@@ -74,7 +109,8 @@ io.on('connection', (socket) => {
     }
     
     room.status = 'playing';
-    
+    room.lastActivity = Date.now();
+
     try {
       // Initialiser l'état du jeu côté serveur
       const gameState = initializeGameState();
@@ -97,21 +133,27 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Re-rejoindre une room après navigation vers game.html (nouveau socket)
+  // Re-rejoindre une room après navigation vers game.html ou reconnexion
   socket.on('rejoinRoom', ({ roomId, playerNumber }) => {
     const room = rooms.get(roomId);
     if (!room) {
       console.warn(`rejoinRoom: room ${roomId} introuvable pour joueur ${playerNumber}`);
+      // Prévenir le client pour qu'il redirige vers l'accueil
+      socket.emit('roomExpired', { reason: 'La partie n\'existe plus (serveur redémarré ?).' });
       return;
     }
     socket.join(roomId);
-    // Mettre à jour le socket ID du joueur et marquer comme socket game.html
     const player = room.players.find(p => p.playerNumber === playerNumber);
     if (player) {
       player.id = socket.id;
       player.inGameSocket = true;
     }
-    console.log(`Joueur ${playerNumber} a rejoint la room ${roomId} depuis game.html (socket: ${socket.id})`);
+    room.lastActivity = Date.now();
+    // Renvoyer l'état courant au joueur reconnecté (page rechargée, onglet restauré…)
+    if (room.gameState) {
+      socket.emit('gameStateSync', room.gameState);
+    }
+    console.log(`Joueur ${playerNumber} a rejoint/reconnecté la room ${roomId} (socket: ${socket.id})`);
   });
 
   // Synchroniser l'état du jeu
@@ -120,6 +162,7 @@ io.on('connection', (socket) => {
     if (!room) return;
     
     room.gameState = gameState;
+    room.lastActivity = Date.now();
     socket.to(roomId).emit('gameStateSync', gameState);
   });
 
@@ -172,49 +215,20 @@ function generateRoomId() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-const ALL_PROGRESS_TOKENS = [
-  { id:'agriculture',   name:'Agriculture',   icon:'🌾', effect:'Prendre 6 pièces. +4 PV fin de partie.' },
-  { id:'architecture',  name:'Architecture',  icon:'🏛', effect:'Prochaines Merveilles coûtent 2 ressources de moins.' },
-  { id:'economie',      name:'Économie',      icon:'💹', effect:"Récupérer les pièces que l'adversaire paie pour acheter des ressources." },
-  { id:'loi',           name:'Loi',           icon:'⚖',  effect:'Apporte 1 symbole scientifique.' },
-  { id:'maconnerie',    name:'Maçonnerie',    icon:'🧱', effect:'Prochains bâtiments civils (bleus) coûtent 2 ressources de moins.' },
-  { id:'mathematiques', name:'Mathématiques', icon:'📐', effect:'+3 PV par jeton Progrès en possession (ce jeton compris).' },
-  { id:'philosophie',   name:'Philosophie',   icon:'📜', effect:'+7 PV en fin de partie.' },
-  { id:'strategie',     name:'Stratégie',     icon:'♟',  effect:'Prochains bâtiments militaires ont +1 bouclier supplémentaire.' },
-  { id:'theologie',     name:'Théologie',     icon:'✝',  effect:'Prochaines Merveilles ont l\'effet Rejouer.' },
-  { id:'urbanisme',     name:'Urbanisme',     icon:'🏙', effect:'+6 pièces maintenant. Chaque construction gratuite par chaînage rapporte +4 pièces.' },
-];
-
-// Initialiser l'état du jeu (même logique que côté client)
+// Initialiser l'état du jeu (utilise les données partagées de shared-data.js)
 function initializeGameState() {
-  // Mélanger les merveilles
-  const allWonders = [
-    { id:'circus_maximus',    name:'Circus Maximus',       cost:{stone:2,wood:1,glass:1},          effects:[{type:'destroy_card',color:'gray'},{type:'shields',amount:1},{type:'vp',amount:3}],                         desc:'Détruire 1 carte grise adverse. +1 bouclier. +3 PV.' },
-    { id:'colosse',           name:'Colosse',              cost:{clay:3,glass:1},                  effects:[{type:'shields',amount:2},{type:'vp',amount:3}],                                                             desc:'+2 boucliers. +3 PV.' },
-    { id:'grand_phare',       name:'Grand Phare',          cost:{clay:1,stone:1,papyrus:2},        effects:[{type:'produce_choice',res:['stone','clay','wood']},{type:'vp',amount:4}],                                   desc:'Produit Pierre/Argile/Bois au choix. +4 PV.' },
-    { id:'jardins_suspendus', name:'Jardins Suspendus',    cost:{clay:2,glass:1,papyrus:1},        effects:[{type:'coins',amount:6},{type:'replay'},{type:'vp',amount:3}],                                               desc:'+6 pièces. Rejouer. +3 PV.' },
-    { id:'grande_bibliotheque',name:'Grande Bibliothèque', cost:{wood:3,glass:1,papyrus:1},        effects:[{type:'choose_progress'},{type:'vp',amount:4}],                                                              desc:'Choisir 1 jeton Progrès parmi 3 écartés. +4 PV.' },
-    { id:'mausolee',          name:'Mausolée',             cost:{clay:2,glass:2,papyrus:1},        effects:[{type:'build_discard'},{type:'vp',amount:2}],                                                                desc:'Construire gratuitement une carte de la défausse. +2 PV.' },
-    { id:'piree',             name:'Pirée',                cost:{wood:2,stone:1,clay:1},           effects:[{type:'produce_choice',res:['glass','papyrus']},{type:'replay'},{type:'vp',amount:2}],                       desc:'Produit Verre/Papyrus au choix. Rejouer. +2 PV.' },
-    { id:'pyramides',         name:'Pyramides',            cost:{stone:3,papyrus:1},               effects:[{type:'vp',amount:9}],                                                                                       desc:'+9 PV.' },
-    { id:'sphinx',            name:'Sphinx',               cost:{clay:1,stone:1,glass:2},          effects:[{type:'replay'},{type:'vp',amount:6}],                                                                       desc:'Rejouer. +6 PV.' },
-    { id:'statue_de_zeus',    name:'Statue de Zeus',       cost:{clay:1,wood:1,papyrus:2,stone:1}, effects:[{type:'destroy_card',color:'brown'},{type:'shields',amount:1},{type:'vp',amount:3}],                         desc:'Détruire 1 carte marron adverse. +1 bouclier. +3 PV.' },
-    { id:'temple_artemis',    name:"Temple d'Artémis",     cost:{wood:1,stone:1,glass:1,papyrus:1},effects:[{type:'coins',amount:12},{type:'replay'}],                                                                   desc:'+12 pièces. Rejouer.' },
-    { id:'via_appia',         name:'Via Appia',            cost:{stone:2,clay:2,papyrus:1},        effects:[{type:'coins',amount:3},{type:'opponent_coins',amount:-3},{type:'replay'},{type:'vp',amount:3}],             desc:'+3 pièces. Adversaire perd 3 pièces. Rejouer. +3 PV.' },
-  ];
-  
-  // Mélanger les merveilles (Fisher-Yates)
-  for (let i = allWonders.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [allWonders[i], allWonders[j]] = [allWonders[j], allWonders[i]];
-  }
+  // Copies mélangées (Fisher-Yates) — on ne modifie pas les tableaux source
+  const shuffle = arr => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
 
-  // Mélanger les jetons Progrès et en sélectionner 5
-  const allTokens = [...ALL_PROGRESS_TOKENS];
-  for (let i = allTokens.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [allTokens[i], allTokens[j]] = [allTokens[j], allTokens[i]];
-  }
+  const allWonders = shuffle(WONDER_DATA);
+  const allTokens  = shuffle(PROGRESS_DATA);
 
   return {
     age: 0,

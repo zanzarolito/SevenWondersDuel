@@ -66,6 +66,12 @@ class MultiplayerManager {
       }, 1000);
     });
 
+    this.socket.on('roomExpired', ({ reason }) => {
+      console.warn('Room expirée:', reason);
+      alert('Cette partie a expiré pour cause d\'inactivité.\nVous allez être redirigé vers l\'accueil.');
+      window.location.href = '/';
+    });
+
     this.socket.on('error', (error) => {
       console.error('Erreur Socket.IO:', error);
     });
