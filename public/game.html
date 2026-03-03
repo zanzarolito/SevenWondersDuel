@@ -133,11 +133,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 4px;
   background: linear-gradient(180deg, #0f0e0a 0%, #1a1810 100%);
   border: 1px solid #3a3420;
   border-radius: 8px;
+  min-height: 0; /* Important pour permettre le scroll */
 }
 #structure-area h3 {
   font-family: 'Cinzel', serif;
@@ -145,17 +145,26 @@ body {
   color: var(--gold);
   letter-spacing: 3px;
   text-align: center;
+  flex-shrink: 0; /* Ne pas réduire le titre */
+  padding: 8px 0 4px 0;
 }
 #card-structure {
   display: flex;
   flex-direction: column;
   gap: 3px;
   align-items: center;
+  overflow-y: auto; /* Rendre scrollable */
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0; /* Important pour le scroll */
+  padding: 4px 8px 8px 8px; /* Espace pour le scroll */
+  width: 100%;
 }
 .structure-row {
   display: flex;
   gap: 3px;
   justify-content: center;
+  flex-shrink: 0; /* Ne pas réduire les rangées */
 }
 
 /* ===== RIGHT AREA (top 1/3: synthèse adversaire, bottom 2/3: joueur local) ===== */
@@ -1715,7 +1724,7 @@ const AGE_STRUCTURES = {
     { row: [0,1],               visible: [0,1],         hidden: false },  // R1: 2 VISIBLES
     { row: [2,3,4],             visible: [],             hidden: true  },  // R2: 3 CACHÉES
     { row: [5,6,7,8],           visible: [0,1,2,3],     hidden: false },  // R3: 4 VISIBLES
-    { row: [9,null,null,10],    visible: [],             hidden: true  },  // R4: 2 CACHÉES séparées (null = espace)
+    { row: [null,9,null,10,null],    visible: [],             hidden: true  },  // R4: 2 CACHÉES séparées (null = espace)
     { row: [11,12,13,14],       visible: [0,1,2,3],     hidden: false },  // R5: 4 VISIBLES
     { row: [15,16,17],          visible: [],             hidden: true  },  // R6: 3 CACHÉES
     { row: [18,19],             visible: [0,1],          hidden: false },  // R7: 2 VISIBLES
@@ -2603,7 +2612,11 @@ function selectCard(cardId, row, col) {
 }
 
 function selectWonder(pid, idx) {
-  if (pid !== G.currentPlayer) { notify('Ce n\'est pas votre Merveille !', 'error'); return; }
+  // Empêcher de sélectionner une merveille adverse
+  if (typeof MP !== 'undefined' && MP.playerNumber && pid !== MP.playerNumber) {
+    notify('Vous ne pouvez pas construire une merveille adverse !', 'error');
+    return;
+  }
   if (G.players[pid].wonders[idx].built) { notify('Cette Merveille est déjà construite.', 'error'); return; }
   
   G.selectedWonder = (G.selectedWonder?.idx === idx) ? null : {pid, idx};
@@ -3469,6 +3482,11 @@ function endGame(reason, winnerId) {
       winner = blueVP1 >= blueVP2 ? 1 : 2;
     }
     showScorePanel('Victoire Civile — Fin de l\'Âge III', winner, vp1, vp2);
+  }
+  
+  // Synchroniser l'écran de fin pour l'adversaire
+  if (typeof MP !== 'undefined' && MP.isConnected) {
+    MP.sendAction('gameEnded', { reason, winnerId });
   }
 }
 

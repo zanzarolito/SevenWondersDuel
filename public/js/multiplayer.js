@@ -159,6 +159,12 @@ class MultiplayerManager {
     // Toutes les mises à jour d'état passent par gameStateSync.
     // Ce handler ne fait qu'un log pour le débogage.
     console.log('Action adversaire reçue:', action, data ? ('J' + data.playerNumber) : '');
+    
+    // Gérer la fin de partie
+    if (action === 'gameEnded' && typeof endGame !== 'undefined') {
+      console.log('Fin de partie reçue:', data);
+      endGame(data.reason, data.winnerId);
+    }
   }
 
   isMyTurn() {
